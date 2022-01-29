@@ -1,0 +1,70 @@
+import sys
+from pathlib import Path
+import pickle
+import shlex
+from argparse import ArgumentError
+import time
+#
+from src import new_parser, process_remote, process_stardard, Controller
+
+HOME_DIR = Path(__file__).parents[0]
+PROMPT = "Enter command ('end' to exit prompt; 'kill' to terminate process)"
+
+def keyboard_input(controller: Controller):
+    inp = input([PROMPT])
+
+    if 'end' in inp:
+        pass
+    elif 'kill' in inp:
+        print("Terminating program...")
+        sys.exit(0)
+    else:
+        try:
+            kb_int_cli = new_parser('remote')
+            args = shlex.split(inp)
+            args = kb_int_cli.parse_args(args)
+            process_remote(args, controller, 'print')
+        except ArgumentError as e:
+            print(f'Error! {e}')
+            kb_int_cli.print_help()
+            keyboard_input(controller)
+        
+    return None
+
+def main(controller: Controller, interval: int = 1):
+    last_state = ''
+    while True:
+        try: # Normal loop action
+            time.sleep(interval)
+            if last_state != controller.monitor.tank_state:
+                last_state = controller.monitor.tank_state
+                print(f'Tank state is: {last_state}')
+
+            controller.schedule.run_pending()
+            controller.check_orders()
+            
+            if any(controller.pending_commands):
+                for msg in controller.pending_commands:
+                    email_cli = new_parser('remote')
+                    cmd = msg.text
+                    cmd = shlex.split(cmd)
+                    args = email_cli.parse_args(cmd)
+                    try:
+                        process_remote(args, controller, 'email', [msg.from_])
+                    except ArgumentError as e:
+                        body = 'Type --help for help'
+                        subj = f'Invalid Command {e}'
+                        controller.notify([msg.from_], body, subj)
+
+                    controller.pending_commands.remove(msg)
+        except KeyboardInterrupt: # Process an interupt to the main process
+            keyboard_input(controller)
+
+        
+if __name__ == '__main__':
+
+    standard_cli = new_parser('standard')
+    args = standard_cli.parse_args()
+    controller, interval = process_stardard(args)
+
+    main(controller, interval)
