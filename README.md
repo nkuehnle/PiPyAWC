@@ -28,6 +28,7 @@ Currently, max run times for each step of a routine is calculated based on a t-D
 
 # Known Issues
 * Several mid-run CLI options are buggy/behave unexpectedly and need to be fixed
+* Some sensors are excessively sensitive and continually swing back and forth between submerged/exposed states when the water surface they are in contact with has high flow. A future version will address this with some signal smoothing.
 
 # To-Dos
 * Create setup.py/cleanup project structure
