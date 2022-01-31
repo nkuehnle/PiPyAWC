@@ -1,7 +1,8 @@
 # Default module imports
 import datetime as dt
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Type
+import socket
 # Third-party module imports
 try:
     from imap_tools import ImapToolsError, MailMessage
@@ -11,8 +12,8 @@ except ModuleNotFoundError as e:
 import pandas as pd
 from statsmodels.formula.api import ols
 from statsmodels.stats.api import DescrStatsW as dsw
-from statsmodels.regression.linear_model import RegressionResults
-from statsmodels.stats.weightstats import DescrStatsW
+from statsmodels.regression.linear_model import RegressionResults as RR
+from statsmodels.stats.weightstats import DescrStatsW as DSW
 # Custom module imports
 from .operations import *  # Control high-lvl logic, schedule, user input & more
 from .peripherals import *  # Interact w/ RPi GPIO headers/equipment
@@ -59,6 +60,13 @@ class Controller:
         return '\n'.join(job_strs)
 
     def register_routine(self, routine: Routine):
+        """[summary]
+
+        Parameters
+        ----------
+        routine : Routine
+            [description]
+        """
         name = routine.name
         print(f"Registering {name}")
         self.routines[name] = routine
@@ -71,11 +79,10 @@ class Controller:
 
         # Schedule updater
         update_job = self.schedule.every(self.routine_update_interval)
-        update_job = getattr(update_job, self.routine_update_unit)
+        getattr(update_job, self.routine_update_unit)
         update_job.do(self.update_routine, name=name)
 
-    def _update_step(self, step: Step, log_path:
-                     Path) -> Tuple[RegressionResults, list]:
+    def _update_step(self, step: Step, log_path: Path) -> Union[RR, DSW, Type[None]]:
         """[summary]
 
         Parameters
@@ -87,23 +94,22 @@ class Controller:
 
         Returns
         -------
-        Tuple[RegressionResults, list]
+        Union[RegressionResults, DescrStatsW, Type[None]]
             [description]
         """
         step_df = pd.read_csv(log_path, sep=',')
         step_df.index = pd.to_datetime(step_df.index, format=TIME_FMT)
         step.first_run = step_df.index.min()
 
-        if len(step_df) >= 10:
+        if len(step_df) >= 30:
             step_df['timedelta'] = (step_df.index - step.first_run).dt.seconds
-            non_err_cols = ['run_time','timeout']
-            err_vars = [i for i in step_df.columns if i not in non_err_cols]
-            comparison_str = f"run_time ~ {' + '.join(err_vars)}"
+            comparison_str = f"run_time ~ {'run_time'}"
             model = ols(comparison_str, step_df).fit()
-        else:
-            err_vars = []
+        elif 30 > len(step_df) >= 5:
             model = dsw(step_df['run_time'])
-        return model, err_vars
+        else:
+            model = None
+        return model
 
 
     def update_routine(self, name: Union[str, Routine]):
@@ -114,15 +120,17 @@ class Controller:
         name : Union[str, Routine]
             [description]
         """
-        routine_dir = LOG_DIR / name
+        rname = name.replace(' ', '_')
+        routine_dir = LOG_DIR / rname
         routine = self.routines[name]
         
         for s in routine.steps:
-            log_path = routine_dir / f'{s.name}.csv'
+            sname = s.name.replace(' ', '_')
+            log_path = routine_dir / f'{sname}.csv'
             if log_path.is_file():
-                s.model, s.model_vars = self._update_step(s, log_path)
+                s._model = self._update_step(s, log_path)
             else:
-                s.model = None
+                s._model = None
 
 
     def run_routine(self, name: Union[str, Routine]):
@@ -286,7 +294,7 @@ class Controller:
         if any(recipients):
             try:
                 self.messenger.send(**kwargs)
-            except: # Re-schedules w/ low priority
+            except (ImapToolsError, socket.gaierror) as e: # Re-schedules w/ low priority
                 try_again = self.schedule.every(1).minute
                 try_again.lowest_priority
                 try_again.run_once = True
@@ -318,7 +326,7 @@ class Controller:
         try:
             new_messages = self.messenger.check(**kwargs)
             self.pending_commands += new_messages
-        except: # Re-schedules w/ low priority
+        except (ImapToolsError, socket.gaierror) as e: # Re-schedules w/ low priority
             try_again = self.schedule.every(1).minutes
             try_again.lowest_priority
             try_again.run_once = True

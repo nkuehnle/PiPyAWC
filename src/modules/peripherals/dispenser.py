@@ -2,7 +2,6 @@
 from typing import Dict, List, Tuple, Union
 from functools import wraps
 import time
-import datetime as dt
 # Third-party module imports
 try:
     from gpiozero import DigitalOutputDevice
@@ -10,11 +9,10 @@ except ModuleNotFoundError as e:
     print(f"WARNING: please run pip install gpiozero")
     raise e
 # Custom module imports
-from .peripheral_errors import PumpInstanceError, InitialStateError, PumpTimeoutError
+from .peripheral_errors import \
+    PumpInstanceError, InitialStateError, PumpTimeoutError, ErrorSensorTriggered
 from .monitor import Monitor
 from .routines import Step
-
-TIME_FMT = '%m/%d/%Y: %H:%M:%S'
 
 class Pump(DigitalOutputDevice):
     def __init__(self, dispenser: 'Dispenser', name: str, pin: int,
@@ -41,16 +39,21 @@ class Pump(DigitalOutputDevice):
         self.dispenser.pumps[self.name] = self
 
 class Dispenser:
-    def __init__(self, pumps: Dict[str, Pump] = {}):
+    def __init__(self, bounce_time: float = 0.0, pumps: Dict[str, Pump] = {}):
         """A factory class and a control interface for processing instances of
         the Step class.
 
         Parameters
         ----------
+        bounce_time : float, optional
+            A length of time (in seconds) to wait between subsequent monitor
+            checks when running a routine step. Useful if sensor
+            response time/sensitivity is too precise.
         pumps : Dict[str, Pump], optional
             A dictionary of pump names (as strings) as keys and instances of
             :class: Pump objects, by default {}
         """
+        self.bounce_time = bounce_time
         self.pumps = pumps
 
     def register(self, name: str, pin: int, active_high: bool = True) -> Pump:
@@ -108,21 +111,19 @@ class Dispenser:
         start_time = time.time()
         self.pumps[step.pump].on() # Turn pump on...
         run_time = time.time()-start_time
-
-        start_dt = dt.datetime.now().strftime(TIME_FMT)
-        max_time = step.interval_range(start_dt, self).max()
+        max_time = step.max_time
 
         # While loop runs until end condition is met or an error state is found
         while monitor.tank_state != step.end_state:
-            # This will typically call controller.monitor.check_for_errors()
+            time.sleep(self.bounce_time)
             # Automatically decrements + returns the remaining runs count
             # Either returns False or an instance of ErrorSensorTriggered
             errors = [monitor.check_error(e) for e in step.error_checks]
-
             if any(errors):
                 for e in errors:
-                    if e.remaining_runs <= 0:
-                        break
+                    if isinstance(e, ErrorSensorTriggered):
+                        if e.remaining_runs <= 0:
+                            break
 
             run_time = time.time()-start_time
             if run_time >= max_time: # PumpTimeoutError if time ran out
@@ -145,6 +146,5 @@ class Dispenser:
         if monitor.tank_state == step.start_state:
             ret = self._run_step(step, monitor)
         else:
-            ret = InitialStateError(step.name, monitor.tank_state)
-            
+            ret = InitialStateError(step.name, monitor.tank_state)     
         return ret

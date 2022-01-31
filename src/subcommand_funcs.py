@@ -4,7 +4,7 @@ from typing import Tuple
 from yaml import load, SafeLoader
 # Custom modules
 from .arg_funcs import on, schedule_in, at, delay_for, delay_until
-from .modules import Controller, Messenger, Step, Routine
+from .modules import Controller, Messenger, Step, Routine, Dispenser
 
 TIME_FMT = '%m/%d/%Y: %H:%M:%S'
 
@@ -207,13 +207,13 @@ def start(args: dict) -> Tuple[Controller, int]:
     with open(args['source'], 'rb') as c:
         config = load(c, SafeLoader)
     
-    routine_update_interval = config['routine_updates']['interval']
-    routine_update_unit = config['routine_updates']['unit']
+    settings = config['settings']
 
-    messenger = Messenger(**config['messenger'])
+    messenger = Messenger(**settings['messenger'])
+    dispenser = Dispenser(**settings['dispenser'])
     controller = Controller(messenger = messenger,
-                            routine_update_interval = routine_update_interval,
-                            routine_update_unit = routine_update_unit)
+                            dispenser = dispenser,
+                            **settings['controller'])
     
     for es in config['error_sensors']:
         controller.monitor.register(sensor_type='error', **es)
@@ -225,12 +225,13 @@ def start(args: dict) -> Tuple[Controller, int]:
         controller.dispenser.register(**p)
 
     for r in config['routines']:
-        r['steps'] = [Step(parent=None, **s) for s in r['steps']]
-        routine = Routine(**r)
 
-        for s in routine.steps:
-            s.parent = routine
-            
+        if any(['_model' in s for s in r['steps']]):
+            raise ValueError("The '_model' parameter should not be manually"+\
+                "provided for routine steps")
+
+        r['steps'] = [Step(**s) for s in r['steps']]
+        routine = Routine(**r)
         controller.register_routine(routine)
         controller.update_routine(routine.name)
     

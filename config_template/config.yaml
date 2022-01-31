@@ -1,4 +1,19 @@
-error_sensors: # Keep empty if you do not have any/modify pins as needed
+settings:
+  controller:
+    routine_update_interval: 24
+    routine_update_unit: hours
+  dispenser:
+    bounce_time: 0.1 # Time (seconds) to wait between status checks during runs
+  messenger: # You need to enter the correct details here... This is an example
+      email_address: ##### PUT AN EMAIL IN
+      password: ##### PUT A PASSWORD IN; RECCOMEND AN APP PASSWORD IF PLAINTEXT
+      contacts:
+        name: ##### YOU CAN USE AN REGULAR EMAIL OR TEXTING ADDRESS (LOOKUP PHONE PROVIDER)
+      smtp_domain: ##### I.E. smpt.gmail.com
+      imap_domain: ##### I.E. imap.gmail.com
+      smtp_port: 465
+      imap_port: 993
+error_sensors:
   - pin: 22
     name: Saltwater
     trigger_when: exposed
@@ -11,7 +26,7 @@ error_sensors: # Keep empty if you do not have any/modify pins as needed
     name: Wastewater
     trigger_when: submerged
     permitted_runs: 0
-tank_sensors: # Put appropriate pins and/or change sensors as needed
+tank_sensors:
   - pin: 5
     name: Normal Level
     when_submerged: [full]
@@ -20,7 +35,7 @@ tank_sensors: # Put appropriate pins and/or change sensors as needed
     name: Low Level
     when_submerged: [full, draining]
     when_exposed: [low]
-pumps: # Put in the correct BCM pin #s and whether your relays are active high or low
+pumps: # Put in the correct BCM pin #s
   - name: Wastewater Pump
     pin: 21
     active_high: False
@@ -30,26 +45,14 @@ pumps: # Put in the correct BCM pin #s and whether your relays are active high o
   - name: RODI Pump
     pin: 20
     active_high: False
-messenger: # You need to enter the correct details here... This is an example
-    email_address: ##### PUT AN EMAIL IN
-    password: ##### PUT A PASSWORD IN; RECCOMEND AN APP PASSWORD IF PLAINTEXT
-    contacts:
-      name: ##### YOU CAN USE AN REGULAR EMAIL OR TEXTING ADDRESS (LOOKUP PHONE PROVIDER)
-    smtp_domain: ##### I.E. smpt.gmail.com
-    imap_domain: ##### I.E. imap.gmail.com
-    smtp_port: 465
-    imap_port: 993
-routine_updates:
-  interval: 24
-  unit: hours
 routines:
   #Parameters for water changes/top offs, time units are in seconds.
   - name: Water Change
-    interval: 16 # Whole numbers only
+    interval: 8 # Whole numbers only
     unit: hours # Allowed: seconds, minutes, days, weeks, years
     priority: 2 # Generally, top off before changing water
-    error_contacts: [Neil, Austin]
-    completion_contacts: [Neil, Austin]
+    error_contacts: []
+    completion_contacts: []
     run_time_confidence: .95
     steps: # An ordered list of the steps to take
     - name: Drain Tank # Step name
@@ -61,6 +64,7 @@ routines:
       proceed_on_timeout: True
       proceed_on_error: False
       cancel_on_critical_failure: False
+      initial_max_runtime: 45
     - name: Refill Tank
       start_state: low
       end_state: full
@@ -68,14 +72,15 @@ routines:
       error_checks: [Saltwater, Wastewater]
       proceed_on_invalid_start: True
       proceed_on_timeout: True
+      initial_max_runtime: 45
   - name: Top Off
-    interval: 5
+    interval: 1
     unit: minutes
     priority: 1
-    error_contacts: [Neil, Austin]
+    error_contacts: []
     completion_contacts: []
-    run_time_confidence: .98
-    steps: # An ordered list of the steps to take
+    run_time_confidence: .95
+    steps:
     - name: Refill
       start_state: draining
       end_state: full
@@ -84,3 +89,4 @@ routines:
       report_invalid_start: False
       proceed_on_invalid_start: True
       proceed_on_timeout: True
+      initial_max_runtime: 15
