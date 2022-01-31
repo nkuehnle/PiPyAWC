@@ -232,6 +232,10 @@ def start(args: dict) -> Tuple[Controller, int]:
 
         r['steps'] = [Step(**s) for s in r['steps']]
         routine = Routine(**r)
+
+        for s in routine.steps:
+            s.parent = routine
+            
         controller.register_routine(routine)
         controller.update_routine(routine.name)
     

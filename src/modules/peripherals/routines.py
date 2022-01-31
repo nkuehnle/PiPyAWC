@@ -23,6 +23,7 @@ class Step:
     end_state: str
     error_checks: Tuple[str]
     initial_max_runtime: float
+    parent: 'Routine' = None
     first_run: dt.datetime = None
     report_invalid_start: bool = True
     proceed_on_invalid_start: bool = False
