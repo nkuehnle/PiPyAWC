@@ -28,7 +28,7 @@ Currently, max run times for each step of a routine is calculated based on a t-D
 
 The confidence interval set in your configs for that routine will determine an upper/lower bound for the prediction based on how frequently you want to flag potential anomalies (1-confidence interval)/2.
 
-In the future I may look into adding either L1 or L2 regression along with information from the check sensors as a model once samples are sufficiently large (i.e. >= 100) using RMSEP to help determine a prediction interval.
+In the future I may look into adding L1 regression along with information from the check sensors as a model once samples are sufficiently large (i.e. >= 100) using RMSEP to help determine a prediction interval.
 
 In all cases, the model will only update/train/fit when first initializing the program and then again based on the time interval supplied in the config file.
 
