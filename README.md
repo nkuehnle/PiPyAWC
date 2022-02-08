@@ -18,19 +18,22 @@ NOTE: This is a HIGHLY experimental program. I'm significantly behind on develop
 	```
 	$ pip3 install ./dist/praw_codials-0.3.0-py3-none-any.whl
 	```
+
 ### Configuation
 
-Fill out the config.yaml file as needed /data/
+Fill out the config.yaml file as needed under ./data/
 
 Environmental variables are supported in the .yaml file using the !EnvVar ${VAR_NAME} format. I recommend this in place of using plain-text. This is slightly more secure than working with raw text paswords and I recommend familiarizing yourself with [environmental variables and user permissions in Linux](https://security.stackexchange.com/questions/14000/environment-variable-accessibility-in-linux/14009#14009). Regardless, I recommend establishing a dedicated GMail account for this program and following Google's instructions for [less secure apps](https://support.google.com/accounts/answer/6010255?hl=en) which involves setting up revocable application password.
 
-In addition, I suggest
-
 ### Basic Usage
 
-Start the program with: python3 ./PiPyAWC/main.py start --interval REFRESH_RATE_SECONDS
+Start the program (assumes installed)
 
-Personally I attach this to a [tmux](https://man7.org/linux/man-pages/man1/tmux.1.html) at boot.
+```
+$ PiPy-AWC start --source ./path/to/your/config.yaml --interval REFRESH_RATE_SECONDS
+```
+
+Personally I attach this to a [tmux](https://man7.org/linux/man-pages/man1/tmux.1.html) session at boot.
 
 There is also "remote CLI" for modifying behaviors mid-run (described below), I will not describe this here for now, as it's still quite buggy.
 
