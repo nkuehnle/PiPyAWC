@@ -6,16 +6,26 @@ from setuptools import setup, find_packages
 with open('README.md', 'r') as readme_file:
     long_description = readme_file.read()
 
+
+_DEPENDENCIES_ = [
+    'pandas',
+    'statsmodel',
+    'pyaml',
+    'imap-tools',
+    'schedule',
+    'gpiozero'
+    ]
+
 setup(
-    name='praw-codials',
-    version='1.0.3',
+    name='pipy-awc',
+    version='0.3.0',
     description='PiPy Automatic-Water Controller',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Neil Kuehnle',
     author_email='nkuehnle1191@gmail.com',
     license='GPLv2',
-    url='https://github.com/nkuehnle/praw-codials',
+    url='https://github.com/nkuehnle/PiPyAWC',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
@@ -30,7 +40,7 @@ setup(
     ],
     keywords=['Raspberry Pi', 'Aquarium', 'Automation', 'AWC', 'RPi'],
     packages=find_packages(),
-    install_requires=['praw', 'pandas', 'pyaml'],
+    install_requires=_DEPENDENCIES_,
     python_requires='~=3.6 ',
     scripts=['bin/PiPy-AWC'],
 )
