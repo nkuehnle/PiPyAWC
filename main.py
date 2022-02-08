@@ -1,11 +1,10 @@
 import sys
 from pathlib import Path
-import pickle
 import shlex
 from argparse import ArgumentError
 import time
 #
-from src import new_parser, process_remote, process_stardard, Controller
+from pipyawc import new_parser, process_remote, process_stardard, Controller
 
 HOME_DIR = Path(__file__).parents[0]
 PROMPT = "Enter command ('end' to exit prompt; 'kill' to terminate process)"
