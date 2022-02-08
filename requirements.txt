@@ -1,3 +1,6 @@
-praw
 pandas
+statsmodel
 pyaml
+schedule
+gpiozero
+imap-tools
