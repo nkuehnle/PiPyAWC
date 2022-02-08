@@ -3,16 +3,37 @@ A dynamically-configurable & automated aquarium water level controller for the R
 
 NOTE: This is a HIGHLY experimental program. I'm significantly behind on developing tractable unit tests w/ mock GPIO pins and it should go without saying that any electronics project involving water carries hazardous risks.
 
-# Getting started
+
+## Getting started
+
+### Installation
+1. Build package wheel from source
+	
+	```
+	$ python3 ./setup.py bdist_wheel
+	```
+
+2. Install via pip
+
+	```
+	$ pip3 install ./dist/praw_codials-0.3.0-py3-none-any.whl
+	```
+### Configuation
+
 Fill out the config.yaml file as needed /data/
 
 Environmental variables are supported in the .yaml file using the !EnvVar ${VAR_NAME} format. I recommend this in place of using plain-text. This is slightly more secure than working with raw text paswords and I recommend familiarizing yourself with [environmental variables and user permissions in Linux](https://security.stackexchange.com/questions/14000/environment-variable-accessibility-in-linux/14009#14009). Regardless, I recommend establishing a dedicated GMail account for this program and following Google's instructions for [less secure apps](https://support.google.com/accounts/answer/6010255?hl=en) which involves setting up revocable application password.
 
 In addition, I suggest
 
+### Basic Usage
+
 Start the program with: python3 ./PiPyAWC/main.py start --interval REFRESH_RATE_SECONDS
 
 Personally I attach this to a [tmux](https://man7.org/linux/man-pages/man1/tmux.1.html) at boot.
+
+There is also "remote CLI" for modifying behaviors mid-run (described below), I will not describe this here for now, as it's still quite buggy.
+
 
 ## Application design
 Type-hints and useful docstrings are still a work in progress, as is this README. **Consider this a very early alpha distribution.**
@@ -57,7 +78,8 @@ Sometimes these subcommands require helper functions to process complex argument
 
 For instance, in the run "Water Change" --at 10:00:00" example above, run is defined in subcommand_funcs.py as a Python function and as a subnode (of the Subcommand class) of the REMOTE_CLI tree structure in arguments.py, the --at optional flag is defined further down within that same tree structure and as a function in argument_funcs.py and called by the run() func as needed.
 
-# Statistical modeling of pump run times.
+
+## Statistical modeling of pump run times.
 Right now I'm assuming that pump times are approximately normally distributed but may be affected by how long the pump has been in use. I'll make changes as needed if this assumption is incorrect. For now this is experimental.
 
 Currently, max run times for each step of a routine is calculated based on a t-Distribution if runtime samples (n) are >= 10 n < 30.  If n >= 30 performs an OLS regression using time elapsed since the first run (in the future I will make a way to label/reset when pumps are replaced). If runtime samples are < 10, it will use the initial_max_runtime parameter which should be set using your best judgement based on expected pump output (i.e. via manufacturer) and fill volumes.
@@ -68,12 +90,14 @@ In the future I may look into adding L1 regression along with information from t
 
 In all cases, the model will only update/train/fit when first initializing the program and then again based on the time interval supplied in the config file to limit performance hits. In the long-term I'll look into implementing some binning/aggregation features (particularly important for evaporative loss replacement routines which might run with high frequency).
 
-# Known Issues
+
+## Known Issues
 * Several mid-run CLI options are buggy/behave unexpectedly and need to be fixed
 * Some sensors are excessively sensitive and continually swing back and forth between submerged/exposed states when the water surface they are in contact with has high flow. A future version will address this with some signal smoothing.
 	* As of 1/30/2022 this has been indirectly address by adding a bounce_time parameter to the dispenser class, for a 60 sq. inch return area, setting this to .1 (seconds) works well
 
-# To-Dos
+
+## To-Dos
 * Create a setup.sh to handle cron job scheduling that will ensure the program always starts on boot and re-starts if it crashes (will probably set-up some environmental variables tied to the Python script to make sure this is handled effectively)
 	* will also handle setup for a shell manager (probably tmux since it is pre-installed on Raspbian) so that you can remote into the process from another machine to use keyboard interrupts if needed. Note that the availability of keyboard interrupts is a backup feature, my main intent is to provide mid-run CLI activity via email. Email commands will not disrupt normal activity, but keyboard interrupts may mess up ongoing runs.
 * Break up more Controller class functionality, possibly:
@@ -82,7 +106,8 @@ In all cases, the model will only update/train/fit when first initializing the p
 * Thorough unit testing + emulator using the tkgpio library so users can simulate tank activity dynamically on non-RaspberryPi infrastucture
 	* I haven't found time to properly read up on how gpiozero's mock pin factories work to establish these. Thus far my testing has been on physical hardware using buckets (and more recently my actual reef aquarium)
 
-# Dependencies
+
+## Dependencies
 * Python (probably ~=3.6+)
 * numpy
 * pandas
@@ -94,6 +119,6 @@ In all cases, the model will only update/train/fit when first initializing the p
 * gpiozero (should be included w/ default Raspbian install)
 * imap-tools
 
-# Schematics/pics coming soon
-Come back later!
 
+## Schematics/pics coming soon
+Come back later!
