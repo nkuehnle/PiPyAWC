@@ -1,5 +1,6 @@
-# Config Files
-./data/config.yaml
+# Configs/Logs
+*./data/personal_config.yaml
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
