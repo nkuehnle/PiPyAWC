@@ -112,28 +112,30 @@ class Dispenser:
         self.pumps[step.pump].on() # Turn pump on...
         run_time = time.time()-start_time
         max_time = step.max_time
+        errs = [False for _ in step.error_checks]
 
         # While loop runs until end condition is met or an error state is found
         while monitor.tank_state != step.end_state:
             time.sleep(self.bounce_time)
-            # Automatically decrements + returns the remaining runs count
-            # Either returns False or an instance of ErrorSensorTriggered
-            errors = [monitor.check_error(e) for e in step.error_checks]
-            if any(errors):
-                for e in errors:
+
+            for i,check in enumerate(step.error_checks):
+                errs[i] = monitor.check_error(check, decrement=not(errs[i]))
+
+            if any(errs):
+                for e in errs:
                     if isinstance(e, ErrorSensorTriggered):
                         if e.remaining_runs <= 0:
                             break
 
             run_time = time.time()-start_time
             if run_time >= max_time: # PumpTimeoutError if time ran out
-                errors.append(PumpTimeoutError(step.pump, run_time))
+                errs.append(PumpTimeoutError(step.pump, run_time))
                 break
 
         self.pumps[step.pump].off() # Shut pump off.
 
-        if any(errors):
-            return (run_time, [e for e in errors if e])
+        if any(errs):
+            return (run_time, [e for e in errs if e])
         else:        
             return run_time
     

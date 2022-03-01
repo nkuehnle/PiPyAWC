@@ -99,12 +99,12 @@ class Controller:
             [description]
         """
         step_df = pd.read_csv(log_path, sep=',')
-        step_df.index = pd.to_datetime(step_df.index, format=TIME_FMT)
-        step.first_run = step_df.index.min()
+        step_df['start_dt'] = pd.to_datetime(step_df['start_dt'], format=TIME_FMT)
+        step.first_run = step_df['start_dt'].min()
 
         if len(step_df) >= 30:
-            step_df['timedelta'] = (step_df.index - step.first_run).dt.seconds
-            comparison_str = f"run_time ~ {'run_time'}"
+            step_df['timedelta'] = (step_df['start_dt'] - step.first_run).dt.seconds
+            comparison_str = f"run_time ~ {'timedelta'}"
             model = ols(comparison_str, step_df).fit()
         elif 30 > len(step_df) >= 5:
             model = dsw(step_df['run_time'])
@@ -235,6 +235,7 @@ class Controller:
         start_dt : str
             [description]
         """
+        name = name.replace(' ','_')
         routine_dir = LOG_DIR / name
 
         try:
@@ -245,7 +246,7 @@ class Controller:
         logs = zip(run_times, errors) # Zip these for looping
 
         for i, (time, errs) in enumerate(logs): # Index, run_time, step errors(s)
-            step_name = self.routines[name].steps[i].name
+            step_name = self.routines[name].steps[i].name.replace(' ','_')
             log_file = routine_dir / f'{step_name}.csv'
 
             err_dict = {'timeout': [False]}
@@ -262,14 +263,11 @@ class Controller:
                 new_row = {**new_row, **err_dict}
                 new_df = pd.DataFrame({**new_row, **err_dict})
 
-                new_df.set_index('start_dt', drop=True, inplace=True)
-                new_df.sort_index(inplace=True)
-
                 if log_file.is_file():
                     existing_df = pd.read_csv(log_file, sep=',')
                     new_df = pd.concat([existing_df, new_df])
                     
-                new_df.to_csv(log_file, sep=',')
+                new_df.to_csv(log_file, sep=',', index=False)
 
 
     def notify(self, recipients: List[str], body: str,
