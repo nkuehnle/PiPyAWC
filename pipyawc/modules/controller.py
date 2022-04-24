@@ -56,8 +56,12 @@ class Controller:
         str
             [description]
         """
-        job_strs = ['']
-        job_strs += [j.to_string(TIME_FMT) for j in self.schedule.jobs]
+        job_strs = []
+        
+        for job in self.schedule.jobs:
+            if not(any(['Update ' in tag for tag in job.tags])):
+                job_strs.append(job.to_string(TIME_FMT))
+
         return '\n'.join(job_strs)
 
     def register_routine(self, routine: Routine):
@@ -71,17 +75,20 @@ class Controller:
         name = routine.name
         print(f"Registering {name}")
         self.routines[name] = routine
-        job = self.schedule.every(routine.interval)
-        job.unit = routine.unit
-        job.priority = routine.priority
-        job.tag(name)
-        job.tag('Repeating')
-        job.do(self.run_routine, name=name)
 
-        # Schedule updater
-        update_job = self.schedule.every(self.routine_update_interval)
-        getattr(update_job, self.routine_update_unit)
-        update_job.do(self.update_routine, name=name)
+        if routine.interval != None:
+            job = self.schedule.every(routine.interval)
+            job.unit = routine.unit
+            job.priority = routine.priority
+            job.tag(name)
+            job.tag('Repeating')
+            job.do(self.run_routine, name=name)
+
+            # Schedule updater
+            update_job = self.schedule.every(self.routine_update_interval)
+            getattr(update_job, self.routine_update_unit)
+            update_job.do(self.update_routine, name=name)
+            update_job.tag(f'Update {name}')
 
     def _update_step(self, step: Step, log_path: Path) -> Union[RR, DSW, Type[None]]:
         """[summary]
@@ -99,12 +106,12 @@ class Controller:
             [description]
         """
         step_df = pd.read_csv(log_path, sep=',')
-        step_df['start_dt'] = pd.to_datetime(step_df['start_dt'], format=TIME_FMT)
-        step.first_run = step_df['start_dt'].min()
+        step_df.index = pd.to_datetime(step_df.index, format=TIME_FMT)
+        step.first_run = step_df.index.min()
 
         if len(step_df) >= 30:
-            step_df['timedelta'] = (step_df['start_dt'] - step.first_run).dt.seconds
-            comparison_str = f"run_time ~ {'timedelta'}"
+            step_df['timedelta'] = (step_df.index - step.first_run).dt.seconds
+            comparison_str = f"run_time ~ {'run_time'}"
             model = ols(comparison_str, step_df).fit()
         elif 30 > len(step_df) >= 5:
             model = dsw(step_df['run_time'])
@@ -124,15 +131,14 @@ class Controller:
         rname = name.replace(' ', '_')
         routine_dir = LOG_DIR / rname
         routine = self.routines[name]
-        
+
         for s in routine.steps:
             sname = s.name.replace(' ', '_')
             log_path = routine_dir / f'{sname}.csv'
-            if log_path.is_file():
+            if log_path.is_file() and log_path.exists():
                 s._model = self._update_step(s, log_path)
             else:
                 s._model = None
-
 
     def run_routine(self, name: Union[str, Routine]):
         """[summary]
@@ -259,13 +265,13 @@ class Controller:
                         err_dict['timeout'] = [True]
                         
             if time != None:
-                new_row = {'start_dt': [start_dt], 'run_time': [time]}
+                new_row = {'run_time': [time]}
                 new_row = {**new_row, **err_dict}
-                new_df = pd.DataFrame({**new_row, **err_dict})
+                new_df = pd.DataFrame(new_row, index=[start_dt])
 
-                if log_file.is_file():
+                if log_file.is_file() and log_file.exists():
                     existing_df = pd.read_csv(log_file, sep=',')
-                    new_df = pd.concat([existing_df, new_df])
+                    new_df = existing_df.merge(new_df, how='outer')
                     
                 new_df.to_csv(log_file, sep=',', index=False)
 

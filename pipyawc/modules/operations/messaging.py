@@ -44,7 +44,32 @@ class Messenger:
         self.imap_port = imap_port
         self.contacts = contacts
 
+    def segment_text(self, body: str) -> List[str]:
+        segments = []
+        while len(body) > 160:
+
+            char = 159
+            found_whitespace = False
+
+            while not(found_whitespace):
+                if body[char].isspace() or body[char] == '':
+                    segments.append(body[:char])
+                    body = body[char+1:]
+                    found_whitespace = True
+                else:
+                    char -= 1
+ 
+        if len(body) > 0:
+            segments.append(body)
+        
+        return segments
+
     def send(self, recipients: List[str], subject: str, body: str) -> bool:
+        segments  = self.segment_text(body)
+        for segment in segments:
+            self._send(recipients=recipients, subject=subject, body=segment)
+
+    def _send(self, recipients: List[str], subject: str, body: str) -> bool:
         """A method to send an email via SMTP to one or more recipients.
 
         Parameters
@@ -65,7 +90,7 @@ class Messenger:
             except KeyError:
                 if '@' in r:
                     _recipients.append(r)
-
+        
         if any(_recipients):
             msg = EmailMessage()
             msg['To'] = ', '.join(_recipients)
