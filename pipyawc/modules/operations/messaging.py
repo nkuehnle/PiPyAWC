@@ -1,7 +1,6 @@
 # Default module imports
 from smtplib import SMTP_SSL, SMTPException
 from email.message import EmailMessage
-from tracemalloc import start
 from typing import List, Dict
 # Third-party module imports
 try:
@@ -117,9 +116,9 @@ class Messenger:
         """
         # Create connection and return new meessages
         mb_kwargs = {
-            'host':self.imap_domain,
-            'port':self.imap_port,
-            'starttls':True
+            'host': self.imap_domain,
+            'port': self.imap_port,
+            'starttls': True
             }
         login_kwargs = {
             'username': self.email_address,
