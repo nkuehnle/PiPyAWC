@@ -105,7 +105,7 @@ class Controller:
         Union[RegressionResults, DescrStatsW, Type[None]]
             [description]
         """
-        step_df = pd.read_csv(log_path, sep=',')
+        step_df = pd.read_csv(log_path, sep=',', index_col=0)
         step_df.index = pd.to_datetime(step_df.index, format=TIME_FMT)
         step.first_run = step_df.index.min()
 
@@ -273,7 +273,7 @@ class Controller:
                     existing_df = pd.read_csv(log_file, sep=',')
                     new_df = existing_df.merge(new_df, how='outer')
                     
-                new_df.to_csv(log_file, sep=',', index=False)
+                new_df.to_csv(log_file, sep=',')
 
 
     def notify(self, recipients: List[str], body: str,
