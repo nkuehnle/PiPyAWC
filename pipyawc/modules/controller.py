@@ -128,8 +128,7 @@ class Controller:
         name : Union[str, Routine]
             [description]
         """
-        rname = name.replace(' ', '_')
-        routine_dir = LOG_DIR / rname
+        routine_dir = LOG_DIR / name.replace(' ', '_')
         routine = self.routines[name]
 
         for s in routine.steps:
@@ -241,8 +240,7 @@ class Controller:
         start_dt : str
             [description]
         """
-        name = name.replace(' ','_')
-        routine_dir = LOG_DIR / name
+        routine_dir = LOG_DIR / name.replace(' ','_')
 
         try:
             routine_dir.mkdir(parents=True, exist_ok=False)
