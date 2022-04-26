@@ -29,14 +29,17 @@ except FileExistsError:
     pass
 
 class Controller:
-    def __init__(self,
-                 messenger: Messenger,
-                 routine_update_interval: int,
-                 routine_update_unit: str,
-                 routines: Dict[str, Routine] = {},
-                 monitor: Monitor = Monitor(),
-                 dispenser: Dispenser = Dispenser(), 
-                 schedule: AScheduler = AScheduler()):
+    def __init__(
+        self,
+        messenger: Messenger,
+        routine_update_interval: int,
+        routine_update_unit: str,
+        email_check_delay_s: int,
+        routines: Dict[str, Routine] = {},
+        monitor: Monitor = Monitor(),
+        dispenser: Dispenser = Dispenser(), 
+        schedule: AScheduler = AScheduler()
+        ):
         self.messenger = messenger
         self.routines = routines
         self.monitor = monitor
@@ -44,7 +47,11 @@ class Controller:
         self.schedule = schedule
         self.routine_update_interval = routine_update_interval
         self.routine_update_unit =  routine_update_unit
+        self.email_check_delay_s = email_check_delay_s
         self.pending_commands: List[MailMessage] = []
+
+        check_job = self.schedule.every(self.email_check_delay_s).seconds
+        check_job.do(self.check_orders)
 
 
     @property
@@ -312,34 +319,15 @@ class Controller:
             return CancelJob()
 
 
-    def check_orders(self, box: str = 'INBOX') -> CancelJob:
+    def check_orders(self) -> CancelJob:
         """Wraps :meth: 'Messenger.check()'
 
-        This function is passed to :meth: PJob.do() to be repeated if an 
-        exception occurs.
-
-        Helps ensure that messenger connection issues do not crash the program
-
-        Parameters
-        ----------
-        box : str, optional
-            [description], by default 'INBOX'
-
-        Returns
-        -------
-        CancelJob
-            [description]
+        This function is passed to :meth: PJob.do() and catches
+        connection-related errors.
         """
-        kwargs = {'box': box}
         exceptions = (ImapToolsError, socket.gaierror, imaplib.IMAP4.abort)
         try:
-            new_messages = self.messenger.check(**kwargs)
+            new_messages = self.messenger.check()
             self.pending_commands += new_messages
         except exceptions as e: # Re-schedules w/ low priority
-            try_again = self.schedule.every(1).minutes
-            try_again.lowest_priority
-            try_again.run_once = True
-            try_again.tag('Check Orders')
-            try_again.do(self.check_orders, **kwargs)
-
-        return CancelJob()
+            print(f'Email check error: {e}')

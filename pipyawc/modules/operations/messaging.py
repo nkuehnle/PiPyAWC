@@ -11,9 +11,17 @@ except ModuleNotFoundError as e:
 
 
 class Messenger:
-    def __init__(self, email_address: str, password: str, smtp_domain: str,
-                 imap_domain: str, smtp_port: int = 465, imap_port: int = 993,
-                 contacts: Dict[str, str] = {}):
+    def __init__(
+        self,
+        email_address: str,
+        password: str,
+        smtp_domain: str,
+        imap_domain: str,
+        inbox: str = 'INBOX',
+        smtp_port: int = 465,
+        imap_port: int = 993,
+        contacts: Dict[str, str] = {}
+        ):
         """[summary]
 
         Parameters
@@ -27,6 +35,8 @@ class Messenger:
             URL for SMTP server
         imap_domain : str
             URL for IMAP server
+        inbox : str, optional
+            Inbox to check for new messages, by default 'INBOX'
         smtp_port : int, optional
             SMTP server port number, by default 465
         imap_port : int, optional
@@ -39,6 +49,7 @@ class Messenger:
         self.password = password
         self.smtp_domain = smtp_domain
         self.imap_domain = imap_domain
+        self.inbox = inbox
         self.smtp_port = smtp_port
         self.imap_port = imap_port
         self.contacts = contacts
@@ -101,7 +112,7 @@ class Messenger:
                 mailer.login(self.email_address, self.password)
                 mailer.send_message(msg)
 
-    def check(self, box: str = 'INBOX') -> List[MailMessage]:
+    def check(self) -> List[MailMessage]:
         """A method to collect all of the unseen/new messages.
 
         Parameters
@@ -123,7 +134,7 @@ class Messenger:
         login_kwargs = {
             'username': self.email_address,
             'password': self.password,
-            'initial_folder': box
+            'initial_folder': self.inbox
             }
         with MailBox(**mb_kwargs).login(**login_kwargs) as mailbox:
             messages = []

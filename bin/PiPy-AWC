@@ -7,8 +7,10 @@ import time
 #
 from pipyawc import new_parser, process_remote, process_stardard, Controller
 
+
 HOME_DIR = Path(__file__).parents[0]
 PROMPT = "Enter command ('end' to exit prompt; 'kill' to terminate process)"
+
 
 def keyboard_input(controller: Controller):
     inp = input([PROMPT])
@@ -31,8 +33,11 @@ def keyboard_input(controller: Controller):
         
     return None
 
+
 def main(controller: Controller, interval: int = 1):
+
     last_state = ''
+
     while True:
         try: # Normal loop action
             time.sleep(interval)
@@ -41,7 +46,6 @@ def main(controller: Controller, interval: int = 1):
                 print(f'Tank state is: {last_state}')
 
             controller.schedule.run_pending()
-            controller.check_orders()
             
             if any(controller.pending_commands):
                 for msg in controller.pending_commands:
@@ -57,10 +61,11 @@ def main(controller: Controller, interval: int = 1):
                         controller.notify([msg.from_], body, subj)
 
                     controller.pending_commands.remove(msg)
+
         except KeyboardInterrupt: # Process an interupt to the main process
             keyboard_input(controller)
 
-        
+
 if __name__ == '__main__':
 
     standard_cli = new_parser('standard')
