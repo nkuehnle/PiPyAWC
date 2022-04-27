@@ -276,7 +276,7 @@ class Controller:
 
                 if log_file.is_file() and log_file.exists():
                     existing_df = pd.read_csv(log_file, sep=',')
-                    new_df = existing_df.merge(new_df, how='outer')
+                    new_df =  pd.concat([existing_df, new_df,], join='outer', axis=0)
                     
                 new_df.to_csv(log_file, sep=',')
 
