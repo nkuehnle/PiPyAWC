@@ -119,7 +119,7 @@ class Controller:
         if 'timeout' in step_df.columns:
             step_df = step_df[step_df['timeout'] == False]
         if any(['error' in c for c in step_df.columns]):
-            cols = [c for c in step_df.columns if 'error' in cols]
+            cols = [c for c in step_df.columns if 'error' in c]
             for c in cols:
                 step_df = step_df[step_df[c].isnull()]
 
