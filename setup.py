@@ -18,7 +18,7 @@ _DEPENDENCIES_ = [
 
 setup(
     name='pipy-awc',
-    version='0.4.0',
+    version='0.5.0',
     description='PiPy Automatic-Water Controller',
     long_description=long_description,
     long_description_content_type='text/markdown',

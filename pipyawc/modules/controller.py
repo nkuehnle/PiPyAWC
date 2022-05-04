@@ -116,11 +116,18 @@ class Controller:
         step_df.index = pd.to_datetime(step_df.index, format=TIME_FMT)
         step.first_run = step_df.index.min()
 
-        if len(step_df) >= 30:
-            step_df['timedelta'] = (step_df.index - step.first_run).dt.seconds
-            comparison_str = f"run_time ~ {'run_time'}"
+        if 'timeout' in step_df.columns:
+            step_df = step_df[step_df['timeout'] == False]
+        if any(['error' in c for c in step_df.columns]):
+            cols = [c for c in step_df.columns if 'error' in cols]
+            for c in cols:
+                step_df = step_df[step_df[c].isnull()]
+
+        if len(step_df) >= 100:
+            step_df['timedelta'] = (step_df.index - step.first_run).total_seconds()
+            comparison_str = "run_time ~ timedelta"
             model = ols(comparison_str, step_df).fit()
-        elif 30 > len(step_df) >= 5:
+        elif 100 > len(step_df) >= 5:
             model = dsw(step_df['run_time'])
         else:
             model = None
@@ -275,10 +282,10 @@ class Controller:
                 new_df = pd.DataFrame(new_row, index=[start_dt])
 
                 if log_file.is_file() and log_file.exists():
-                    existing_df = pd.read_csv(log_file, sep=',')
-                    new_df =  pd.concat([existing_df, new_df,], join='outer', axis=0)
+                    existing_df = pd.read_csv(log_file, sep=',', index_col=0)
+                    new_df =  pd.concat([existing_df, new_df])
                     
-                new_df.to_csv(log_file, sep=',')
+                new_df.to_csv(log_file, sep=',', index=True, header=True, index_label="Start Time")
 
 
     def notify(self, recipients: List[str], body: str,
