@@ -32,9 +32,11 @@ class Controller:
     def __init__(
         self,
         messenger: Messenger,
-        routine_update_interval: int,
-        routine_update_unit: str,
-        email_check_delay_s: int,
+        routine_update_interval: int = 1,
+        routine_update_unit: str = 'days',
+        email_check_delay_s: int = 30,
+        stdev_min_n: int = 30,
+        ols_min_n: int = 100,
         routines: Dict[str, Routine] = {},
         monitor: Monitor = Monitor(),
         dispenser: Dispenser = Dispenser(), 
@@ -47,6 +49,8 @@ class Controller:
         self.schedule = schedule
         self.routine_update_interval = routine_update_interval
         self.routine_update_unit =  routine_update_unit
+        self.stdev_min_n = stdev_min_n
+        self.ols_min_n = ols_min_n
         self.email_check_delay_s = email_check_delay_s
         self.pending_commands: List[MailMessage] = []
 
@@ -116,18 +120,16 @@ class Controller:
         step_df.index = pd.to_datetime(step_df.index, format=TIME_FMT)
         step.first_run = step_df.index.min()
 
-        if 'timeout' in step_df.columns:
-            step_df = step_df[step_df['timeout'] == False]
         if any(['error' in c for c in step_df.columns]):
             cols = [c for c in step_df.columns if 'error' in c]
             for c in cols:
                 step_df = step_df[step_df[c].isnull()]
 
-        if len(step_df) >= 100:
+        if len(step_df) >= self.ols_min_n:
             step_df['timedelta'] = (step_df.index - step.first_run).total_seconds()
             comparison_str = "run_time ~ timedelta"
             model = ols(comparison_str, step_df).fit()
-        elif 100 > len(step_df) >= 5:
+        elif self.ols_min_n > len(step_df) >= self.stdev_min_n:
             model = dsw(step_df['run_time'])
         else:
             model = None

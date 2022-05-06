@@ -16,7 +16,7 @@ NOTE: This is a HIGHLY experimental program. I'm significantly behind on develop
 2. Install via pip
 
 	```
-	$ pip3 install ./dist/pipy-awc-0.5.1-py3-none-any.whl
+	$ pip3 install ./dist/pipy-awc-0.5.2-py3-none-any.whl
 	```
 
 ### Configuation
