@@ -115,7 +115,7 @@ class Dispenser:
         errs = [False for _ in step.error_checks]
 
         # While loop runs until end condition is met or an error state is found
-        while monitor.tank_state != step.end_state:
+        while monitor.tank_state not in step.end_states:
             time.sleep(self.bounce_time)
 
             for i,check in enumerate(step.error_checks):
@@ -145,7 +145,7 @@ class Dispenser:
         """
         A wrapper for _run_step() that checks and reports on the start status
         """
-        if monitor.tank_state == step.start_state:
+        if monitor.tank_state in step.start_states:
             ret = self._run_step(step, monitor)
         else:
             ret = InitialStateError(step.name, monitor.tank_state)     
