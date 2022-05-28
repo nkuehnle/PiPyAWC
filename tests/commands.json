@@ -1,0 +1,46 @@
+{
+    "start": {
+      "start --source my_source --interval 5": {
+        "source": "my_source",
+        "interval": 5.0
+      },
+      "start --source my_source": {
+        "source": "my_source",
+        "interval": 1.0
+      }
+    },
+    "run": {
+      "run \"Water_Change\" --at 00:00:00": {
+        "routine": "Water_Change",
+        "at" : "00:00:00"
+      },
+      "run \"Water_Change\" --in 5 minutes": {
+        "routine": "Water_Change",
+        "in": ["5", "minutes"]
+      },
+      "run \"Water_Change\" --in 3 seconds --repeat": {
+        "routine": "Water_Change",
+        "in": ["3", "seconds"],
+        "repeat": true
+      }
+    },
+    "pause": {
+      "pause \"Water_Change\" \"12345\" --for 5 minutes": {
+        "job_tags": ["Water_Change", "12345"],
+        "for" : ["5", "minutes"]
+      },
+      "pause \"Water_Change\" --until 00:00:00": {
+        "job_tags": ["Water_Change"],
+        "until": ["00:00:00"]
+      },
+      "pause \"Water_Change\" --until friday at 5PM": {
+        "job_tags": ["Water_Change"],
+        "until": ["friday", "at", "5PM"]
+      }
+    },
+    "cancel": {
+      "cancel Water_Change Repeating": {
+        "job_tags": ["Water_Change", "Repeating"]
+      }
+    }
+}
