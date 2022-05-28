@@ -1,7 +1,12 @@
 # Default module imports
+from ast import Not
 from smtplib import SMTP_SSL, SMTPException
 from email.message import EmailMessage
-from typing import List, Dict
+from typing import List, Dict, Tuple
+from dataclasses import dataclass
+from abc import abstractmethod
+import shlex
+import ssl
 # Third-party module imports
 try:
     from imap_tools import MailBox, AND, MailMessage
@@ -9,8 +14,24 @@ except ModuleNotFoundError as e:
     print(f"WARNING: please run pip install imap-tools")
     raise e
 
+@dataclass
+class RemoteCommand:
+    command: List[str]
+    sender: str
 
 class Messenger:
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def check():
+        raise NotImplementedError("Implement this!")
+
+    @abstractmethod
+    def send():
+        raise NotImplementedError("Implement this!")
+
+class EmailMessenger(Messenger):
     def __init__(
         self,
         email_address: str,
@@ -45,6 +66,7 @@ class Messenger:
             A dictionary of short-form contact names and corresponding email
             addresses, by default {}
         """
+        super().__init__()
         self.email_address = email_address
         self.password = password
         self.smtp_domain = smtp_domain
@@ -112,7 +134,7 @@ class Messenger:
                 mailer.login(self.email_address, self.password)
                 mailer.send_message(msg)
 
-    def check(self) -> List[MailMessage]:
+    def check(self) -> List[Tuple[str, str]]:
         """A method to collect all of the unseen/new messages.
 
         Parameters
@@ -122,14 +144,14 @@ class Messenger:
 
         Returns
         -------
-        List[MailMessage]
-            A list of new messages.
+        List[Tuple[str, str]]:
+            A list commands.
         """
         # Create connection and return new meessages
         mb_kwargs = {
             'host': self.imap_domain,
             'port': self.imap_port,
-            'starttls': True
+            'ssl_context': ssl.SSLContext,
             }
         login_kwargs = {
             'username': self.email_address,
@@ -137,11 +159,12 @@ class Messenger:
             'initial_folder': self.inbox
             }
         with MailBox(**mb_kwargs).login(**login_kwargs) as mailbox:
-            messages = []
+            commands = []
 
             # Collect only unseen mail
             for msg in mailbox.fetch(AND(seen=False)):
                 if msg.from_ in self.contacts.values():
-                    messages.append(msg)
+                    new_cmd = RemoteCommand(shlex.split(msg.text), msg.from_)
+                    commands.append(new_cmd)
 
-        return messages
+        return commands
