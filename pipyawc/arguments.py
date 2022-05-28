@@ -66,8 +66,7 @@ RUN = Subcommand(run, 'run', RUN, run_kwargs)
 # pause subcommand
 #pause [job_tag1] [job_tag2] ... [job_tagN]
 job_kwargs = {
-    'action': 'append',
-    'nargs': '+',
+    'nargs': '+',   
     'help': 'A valid list of job tags (UID recommended)',
     'type': str,
 }
@@ -75,7 +74,6 @@ job_arg = Argument(['job_tags'], job_kwargs)
 
 # pause [job] --until datetime
 until_kwargs = {
-    'action': 'store',
     'nargs': '+',
     'help': 'Any standard or fuzzy timestring (i.e. MM-DD HH:MM:SS, or 5 days from now',
     'type': str,
@@ -85,7 +83,6 @@ until_arg = Argument(['-u', '--until'], until_kwargs)
 
 # pause [job] --for [quantity units]
 for_kwargs = {
-    'action': 'store',
     'nargs': '+',
     'help': 'A valid length of time and its associated units (i.e. 5 minutes)',
     'type': str,

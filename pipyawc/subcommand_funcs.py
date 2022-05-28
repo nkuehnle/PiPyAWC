@@ -87,7 +87,7 @@ def pause(args: dict, controller: Controller) -> Tuple[bool, str]:
         A tuple consisting of the success/failure status (bool) and a
         descriptive message to return to the user.
     """
-    jobs = controller.schedule.get_jobs_from_tags(args['jobtags'])
+    jobs = controller.schedule.get_jobs_from_tags(args['job_tags'])
 
     if len(jobs) > 1: # More than one job found, report this back.
         for i,j in enumerate(jobs):
