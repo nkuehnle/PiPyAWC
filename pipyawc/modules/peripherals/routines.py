@@ -19,8 +19,8 @@ except FileExistsError:
 class Step:
     name: str
     pump: str
-    start_state: str
-    end_state: str
+    start_states: List[str]
+    end_states: List[str]
     error_checks: Tuple[str]
     initial_max_runtime: float
     parent: 'Routine' = None
