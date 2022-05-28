@@ -31,7 +31,7 @@ except FileExistsError:
 class Controller:
     def __init__(
         self,
-        messenger: Messenger,
+        messenger: Messenger = Messenger(),
         routine_update_interval: int = 1,
         routine_update_unit: str = 'days',
         email_check_delay_s: int = 30,
@@ -75,6 +75,7 @@ class Controller:
 
         return '\n'.join(job_strs)
 
+
     def register_routine(self, routine: Routine):
         """[summary]
 
@@ -100,6 +101,7 @@ class Controller:
             getattr(update_job, self.routine_update_unit)
             update_job.do(self.update_routine, name=name)
             update_job.tag(f'Update {name}')
+
 
     def _update_step(self, step: Step, log_path: Path) -> Union[RR, DSW, Type[None]]:
         """[summary]
@@ -154,6 +156,7 @@ class Controller:
                 s._model = self._update_step(s, log_path)
             else:
                 s._model = None
+
 
     def run_routine(self, name: Union[str, Routine]):
         """[summary]
