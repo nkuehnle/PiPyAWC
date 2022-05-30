@@ -12,7 +12,7 @@ except ModuleNotFoundError as e:
     print(f"WARNING: please run pip install imap-tools")
     raise e
 # Custom modules
-from _messenger import Messenger, RemoteCommand
+from ._messenger import Messenger, RemoteCommand
 
 class EmailError(SMTPException, ImapToolsError, socket.gaierror):
     def __init__(self):
