@@ -211,7 +211,7 @@ def start(args: dict) -> Tuple[Controller, int]:
     
     settings = config['settings']
 
-    messenger = Messenger(**settings['messenger'])
+    messenger = settings['messenger']
     dispenser = Dispenser(**settings['dispenser'])
     controller = Controller(messenger = messenger,
                             dispenser = dispenser,
