@@ -1,4 +1,4 @@
-from .messaging import Messenger, EmailMessage
+from .messaging import Messenger, EmailMessenger, EmailError
 from .advanced_schedule import AdvancedScheduler as AScheduler
 from .advanced_schedule import AdvancedJob as AJob
 from .advanced_schedule import CancelJob

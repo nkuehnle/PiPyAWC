@@ -2,14 +2,7 @@
 import datetime as dt
 from pathlib import Path
 from typing import Dict, List, Union, Type
-import socket
-import imaplib
 # Third-party module imports
-try:
-    from imap_tools import ImapToolsError, MailMessage
-except ModuleNotFoundError as e:
-    print(f"WARNING: please run pip install imap-tools")
-    raise e
 import pandas as pd
 from statsmodels.formula.api import ols
 from statsmodels.stats.api import DescrStatsW as dsw
@@ -52,7 +45,7 @@ class Controller:
         self.stdev_min_n = stdev_min_n
         self.ols_min_n = ols_min_n
         self.email_check_delay_s = email_check_delay_s
-        self.pending_commands: List[MailMessage] = []
+        self.pending_commands: List[str] = []
 
         check_job = self.schedule.every(self.email_check_delay_s).seconds
         check_job.do(self.check_orders)
@@ -321,7 +314,7 @@ class Controller:
         if any(recipients):
             try:
                 self.messenger.send(**kwargs)
-            except (ImapToolsError, socket.gaierror) as e: # Re-schedules w/ low priority
+            except EmailError as e: # Re-schedules w/ low priority
                 try_again = self.schedule.every(1).minute
                 try_again.lowest_priority
                 try_again.run_once = True
@@ -337,9 +330,8 @@ class Controller:
         This function is passed to :meth: PJob.do() and catches
         connection-related errors.
         """
-        exceptions = (ImapToolsError, socket.gaierror, imaplib.IMAP4.abort)
         try:
             new_messages = self.messenger.check()
             self.pending_commands += new_messages
-        except exceptions as e: # Re-schedules w/ low priority
+        except EmailError as e: # Re-schedules w/ low priority
             print(f'Email check error: {e}')
