@@ -1,37 +1,25 @@
 # Default module imports
-from ast import Not
 from smtplib import SMTP_SSL, SMTPException
 from email.message import EmailMessage
 from typing import List, Dict, Tuple
-from dataclasses import dataclass
-from abc import abstractmethod
 import shlex
 import ssl
+import socket
 # Third-party module imports
 try:
-    from imap_tools import MailBox, AND, MailMessage
+    from imap_tools import MailBox, AND, ImapToolsError
 except ModuleNotFoundError as e:
     print(f"WARNING: please run pip install imap-tools")
     raise e
+# Custom modules
+from _messenger import Messenger, RemoteCommand
 
-@dataclass
-class RemoteCommand:
-    command: List[str]
-    sender: str
-
-class Messenger:
+class EmailError(SMTPException, ImapToolsError, socket.gaierror):
     def __init__(self):
-        pass
-
-    @abstractmethod
-    def check():
-        raise NotImplementedError("Implement this!")
-
-    @abstractmethod
-    def send():
-        raise NotImplementedError("Implement this!")
+        super().__init__()
 
 class EmailMessenger(Messenger):
+    yaml_tag = u'!EmailMessenger'
     def __init__(
         self,
         email_address: str,
