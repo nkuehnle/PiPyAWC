@@ -1,7 +1,7 @@
 # PiPyAWC
 A dynamically-configurable & automated aquarium water level controller for the Raspberry Pi using Python. Intended to run using mechanical voltage relays (i.e. Waveshare Relay Hat) and optical contact liquid sensors (i.e. from DFRobot/CQRObot)
 
-NOTE: This is a HIGHLY experimental program. I'm significantly behind on developing tractable unit tests w/ mock GPIO pins and it should go without saying that any electronics project involving water carries hazardous risks.
+NOTE: This is an experimental program. I'm significantly behind on developing tractable unit tests w/ mock GPIO pins and **it should go without saying that any electronics project involving water carries hazardous risks, use electronics rated for submersible applications**.
 
 
 ## Getting started
@@ -16,7 +16,7 @@ NOTE: This is a HIGHLY experimental program. I'm significantly behind on develop
 2. Install via pip
 
 	```
-	$ pip3 install ./dist/pipy-awc-0.5.2-py3-none-any.whl
+	$ pip3 install ./dist/pipy-awc-0.7.3-py3-none-any.whl
 	```
 
 ### Configuation
@@ -68,6 +68,11 @@ Some of this is quite complicated as I've setup a series of subcommands that can
 run "Water Change" --at 10:00:00
 ```
 
+or
+```
+run "Water Change" --in "5" "minutes"
+```
+
 All such commands are technically setup as argparse subcommands under a parent parser. The start-up CLI parser, email "CLI" parser, and keyboard interrupt CLI parser are all separate instances. The functions/classes in ./pipyawc are all intended to put off the burden of instantiating these multiple, complex parsers to an area of the code outside of the main() function.
 
 The file convenience_classes.py contains classes user for storing data related to different parser subcommands/arguments/argument groups and adding them to an existing parser. The parser_factory.py file implements functions which take in list-like tree structures of these objects and build up a parser from a base ArgumentParser class.
@@ -81,24 +86,10 @@ Sometimes these subcommands require helper functions to process complex argument
 
 For instance, in the run "Water Change" --at 10:00:00" example above, run is defined in subcommand_funcs.py as a Python function and as a subnode (of the Subcommand class) of the REMOTE_CLI tree structure in arguments.py, the --at optional flag is defined further down within that same tree structure and as a function in argument_funcs.py and called by the run() func as needed.
 
-
-## Statistical modeling of pump run times.
-Right now I'm assuming that pump times are approximately normally distributed but may be affected by how long the pump has been in use. I'll make changes as needed if this assumption is incorrect. For now this is experimental.
-
-Currently, max run times for each step of a routine is calculated based on a t-Distribution if runtime samples (n) are >= 10 n < 30.  If n >= 30 performs an OLS regression using time elapsed since the first run (in the future I will make a way to label/reset when pumps are replaced). If runtime samples are < 10, it will use the initial_max_runtime parameter which should be set using your best judgement based on expected pump output (i.e. via manufacturer) and fill volumes.
-
-The confidence interval set in your configs for that routine will determine an upper/lower bound for the prediction based on how frequently you want to flag potential anomalies (1-confidence interval)/2.
-
-In the future I may look into adding L1 regression along with information from the error check sensors as a model once samples are sufficiently large (i.e. >= 100) using RMSEP/cross-validation to estimate prediction intervals. My initial assumption is that w/o regularization, providing these as predictors would produce low-quality models. For instance, a sensor which is placed at a level that corresponds to a meaningful head pressure change for the pump may be useful to include, but this will vary between setups quite greatly. Thus L1 regularization is needed for feature selection.
-
-In all cases, the model will only update/train/fit when first initializing the program and then again based on the time interval supplied in the config file to limit performance hits. In the long-term I'll look into implementing some binning/aggregation features (particularly important for evaporative loss replacement routines which might run with high frequency).
-
-
 ## Known Issues
-* Several mid-run CLI options are buggy/behave unexpectedly and need to be fixed
+* Several mid-run/KeyBoardInterrupt CLI options are buggy/behave unexpectedly and need to be fixed
 * Some sensors are excessively sensitive and continually swing back and forth between submerged/exposed states when the water surface they are in contact with has high flow. A future version will address this with some signal smoothing.
 	* As of 1/30/2022 this has been indirectly address by adding a bounce_time parameter to the dispenser class, for a 60 sq. inch return area, setting this to .1 (seconds) works well
-
 
 ## To-Dos
 * Create a setup.sh to handle cron job scheduling that will ensure the program always starts on boot and re-starts if it crashes (will probably set-up some environmental variables tied to the Python script to make sure this is handled effectively)
@@ -111,17 +102,13 @@ In all cases, the model will only update/train/fit when first initializing the p
 
 
 ## Dependencies
-* Python (probably ~=3.6+)
+* Python (probably ~=3.7+)
 * numpy
 * pandas
-* scipy
-* statsmodel
-	* which itself requires scipy, numpy, pandas)
 * pyaml
 * schedule
 * gpiozero (should be included w/ default Raspbian install)
 * imap-tools
-
 
 ## Schematics/pics coming soon
 Come back later!

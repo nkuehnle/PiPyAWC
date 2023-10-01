@@ -1,14 +1,20 @@
-#
+# Built-in modules
 from argparse import Namespace
-import logging
 from typing import List, Optional, Tuple
 from functools import wraps
-#
+
+# import logging # move from print statments to logging
+
+# Custome modules
 from .modules import Controller
 
-def _process_remote(args: Namespace, controller: Controller,
-                    output: str = 'print', recipients: 
-                    Optional[List[str]] = None):
+
+def _process_remote(
+    args: Namespace,
+    controller: Controller,
+    output: str = "print",
+    recipients: Optional[List[str]] = None,
+):
     """[summary]
 
     Parameters
@@ -31,47 +37,51 @@ def _process_remote(args: Namespace, controller: Controller,
     ValueError
         Raised when output is set to 'email' but no recipients are passed.
     """
-    args = vars(args)
+    _args = vars(args)
 
-    if args['_helpstr_']:
-        ret = (1, args['returns'])
+    if _args["_helpstr_"]:
+        ret = (1, _args["returns"])
     else:
-        func = args['func']
-        ret = func(args, controller)
+        func = _args["func"]
+        ret = func(_args, controller)
 
-    if ret != None:
-        if output == 'print':
+    if ret is not None:
+        if output == "print":
             if ret[0]:
-                print(f'Sucess! {ret[1]}')
+                print(f"Sucess! {ret[1]}")
             else:
-                print(f'Error! {ret[1]}')
-        elif output == 'email':
+                print(f"Error! {ret[1]}")
+        elif output == "email":
             if ret[0]:
-                sub = 'Success!'
+                sub = "Success!"
             else:
-                sub = 'Error!'
-                
-            if recipients != None:
-                controller.notify(recipients=recipients,
-                                  body = ret[1],
-                                  subject = sub)
+                sub = "Error!"
+
+            if recipients is not None:
+                controller.notify(recipients=recipients, body=ret[1], subject=sub)
             else:
-                e = 'A recipient list must be passed when command parsing '
-                raise ValueError(e + 'output is set to email.')
+                e = "A recipient list must be passed when command parsing "
+                raise ValueError(e + "output is set to email.")
+
 
 @wraps(_process_remote)
-def process_remote(args: Namespace, controller: Controller,
-                   output: str = 'print', recipients:
-                   Optional[List[str]] = None):
-    try:
-        _process_remote(args, controller, output, recipients)
-    except Exception as e:
-        if output == 'print':
-            print(f'Error! {e}')
-        elif output == 'email':
-            body = f'Something went wrong: {e}'
-            subject = 'Error!'
-            controller.notify(recipients, body, subject)        
+def process_remote(
+    args: Namespace,
+    controller: Controller,
+    output: str = "print",
+    recipients: Optional[List[str]] = None,
+):
+    if recipients:
+        try:
+            _process_remote(args, controller, output, recipients)
+        except Exception as e:
+            if output == "print":
+                print(f"Error! {e}")
+            elif output == "email":
+                body = f"Something went wrong: {e}"
+                subject = "Error!"
+                controller.notify(recipients, body, subject)
+
 
 def process_stardard(args: Namespace) -> Tuple[Controller, float]:
     """[summary]
@@ -86,7 +96,7 @@ def process_stardard(args: Namespace) -> Tuple[Controller, float]:
     Tuple[Controller, float]
         [description]
     """
-    args = vars(args)
-    func = args['func']
+    _args = vars(args)
+    func = _args["func"]
 
-    return func(args)
+    return func(_args)

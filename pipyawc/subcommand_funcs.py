@@ -1,20 +1,44 @@
 # Default modules
-from typing import Tuple
+from typing import Tuple, Optional
+from argparse import ArgumentError
+
 # Third-party modules
 import yaml
+
 # Custom modules
 from .arg_funcs import on, schedule_in, at, delay_for, delay_until
-from .modules import \
-    Controller, Messenger, Step, Routine, Dispenser, env_var_constructor
+from .modules import Controller, Step, Routine, Dispenser, CONSTRUCTORS, AJob
 
-TIME_FMT = '%m/%d/%Y: %H:%M:%S'
+TIME_FMT = "%m/%d/%Y: %H:%M:%S"
+
+
+def _set_at_in(controller: Controller, args: dict, job: Optional[AJob]) -> AJob:
+    if args["at"]:
+        if job:
+            job = at(args["at"], job)
+        else:
+            job = at(args["at"], controller.schedule)
+    elif args["in"]:
+        job = schedule_in(args["in"], controller.schedule)
+
+    if job is None:
+        arg_str = ", ".join([f"{k} = {v}" for k, v in args.items()])
+        raise ArgumentError(
+            argument=None, message=f"Invalid job schedule settings: {arg_str}"
+        )
+
+    return job
+
 
 def run(args: dict, controller: Controller) -> Tuple[bool, str]:
     """
     Schedules a specific routine (by name, requires use of quotations) at the
     specified time
 
-    run [routine] --in [interval] [unit] OR --at [HH:MM:SS] OR --on [DAY] --at [HH:MM:SS]
+    Ex:
+        run [routine] --in [interval] [unit]
+        run [routine] --at [HH:MM:SS]
+        run [routine] --on [DAY] --at [HH:MM:SS]
 
     --in takes a single interval/unit pair (i.e. 5 minutes)
     --at takes a specific 24-hr time in format HH:MM:SS
@@ -35,33 +59,28 @@ def run(args: dict, controller: Controller) -> Tuple[bool, str]:
         A tuple consisting of the success/failure status (bool) and a
         descriptive message to return to the user.
     """
-    if not(args['routine'] in controller.routines.keys()):
-        return (0, f"Invalid routine name!")
+    routine_name = args["routine"]
+    if not (routine_name in controller.routines.keys()):
+        return (False, f"Invalid routine name: {routine_name}!")
 
-    if args['on']:
-        job = on(args['on'], controller.schedule)
+    if args["on"]:
+        job = on(args["on"], controller.schedule)
     else:
         job = None
 
-    if 'at' in args:
-        if job:
-            job = at(args['at'], job)
-        else:
-            job = at(args['at'], controller.schedule)
-    elif 'in' in args:
-        job = schedule_in(args['in'], controller.schedule)
+    job = _set_at_in(controller, args, job)
 
-    job.run_once = not(args['repeat'])
+    job.run_once = not args["repeat"]
 
-    if args['repeat']:
-        job.tag('Repeating')
+    if args["repeat"]:
+        job.tag("Repeating")
     else:
-        job.tag('One-Time')
-    job.tag(args['routine'])
+        job.tag("One-Time")
+    job.tag(args["routine"])
 
-    job.do(controller.run_routine, name=args['routine'])
+    job.do(controller.run_routine, name=args["routine"])
 
-    return (1, f"New job scheduled!\n{job.to_string(TIME_FMT)}")
+    return (True, f"New job scheduled!\n{job.to_string(TIME_FMT)}")
 
 
 def pause(args: dict, controller: Controller) -> Tuple[bool, str]:
@@ -69,7 +88,9 @@ def pause(args: dict, controller: Controller) -> Tuple[bool, str]:
     Takes a job tag, which is required to be uniquely assigned to a single job
     and delays that job until the indicated time.
 
-    pause [job_tag] --until [fuzzy] [time] [string] OR --for [interval1] [unit1] ... [intervalN] [unit N]
+    Ex:
+        pause [job_tag] --until [fuzzy] [time] [string]
+        pause [job_tag] --for [interval1] [unit1] ... [intervalN] [unit N]
 
     --until attempts to process a fuzzy timestring (i.e. next Friday at 5PM)
     --for takes a list of intervals/units (i.e. 5 minutes 6 seconds)
@@ -87,27 +108,27 @@ def pause(args: dict, controller: Controller) -> Tuple[bool, str]:
         A tuple consisting of the success/failure status (bool) and a
         descriptive message to return to the user.
     """
-    jobs = controller.schedule.get_jobs_from_tags(args['job_tags'])
+    jobs = controller.schedule.get_jobs_from_tags(args["job_tags"])
 
-    if len(jobs) > 1: # More than one job found, report this back.
-        for i,j in enumerate(jobs):
+    if len(jobs) > 1:  # More than one job found, report this back.
+        for i, j in enumerate(jobs):
             jobs[i] = f"{j}: ({', '.join(j.tags)})"
-        return (0, f"Multiple jobs were found {'; '.join(jobs)}.")
+        return (False, f"Multiple jobs were found {'; '.join(jobs)}.")
 
-    else: # One job found, let's proceed
+    else:  # One job found, let's proceed
         job = jobs[0]
-        
-        try: # Attempt to use the delay function
-            if 'for' in args:
-                job = delay_for(args['for'], job)
-            elif 'until' in args:
-                job = delay_until(args['until'], job)
-        except ValueError as e: # If an error was raised, return it as a string
-            return (0, str(e))
+
+        try:  # Attempt to use the delay function
+            if "for" in args:
+                job = delay_for(args["for"], job)
+            elif "until" in args:
+                job = delay_until(args["until"], job)
+        except ValueError as e:  # If an error was raised, return it as a string
+            return (False, str(e))
 
     # Report successful delay
     new_time = job.next_run.strftime(TIME_FMT)
-    return (1, f'Job: {job.to_string()} has been delayed until {new_time}.')
+    return (True, f"Job: {job.to_string()} has been delayed until {new_time}.")
 
 
 def cancel(args: dict, controller: Controller) -> Tuple[bool, str]:
@@ -115,7 +136,8 @@ def cancel(args: dict, controller: Controller) -> Tuple[bool, str]:
     Takes a job tag, which is required to be uniquely assigned to a single job
     and cancels that job.
 
-    cancel [job_tag]
+    Ex:
+        cancel [job_tag]
 
     Parameters
     ----------
@@ -130,25 +152,28 @@ def cancel(args: dict, controller: Controller) -> Tuple[bool, str]:
         A tuple consisting of the success/failure status (bool) and a
         descriptive message to return to the user.
     """
-    jobs = controller.schedule.get_jobs_from_tags(args['jobtags'])
+    job_tags = args["jobtags"]
+    jobs = controller.schedule.get_jobs_from_tags(job_tags)
 
-    if len(jobs) > 1: # Report that more than one job was found.
-        for i,j in enumerate(jobs):
+    if len(jobs) > 1:  # Report that more than one job was found.
+        for i, j in enumerate(jobs):
             jobs[i] = f"{j}: ({', '.join(j.tags)})"
-        return (0, f"Multiple jobs were found {'; '.join(jobs)}.")
-    elif len(jobs) == 1: # Only one job, let's proceed
+        return (False, f"Multiple jobs were found {'; '.join(jobs)}.")
+    elif len(jobs) == 1:  # Only one job, let's proceed
         job = jobs[0]
         job_str = job.to_string()
         job.cancel_job()
-        return (1, f"Job: {job_str} cancelled!")
+        return (True, f"Job: {job_str} cancelled!")
     else:
-        return (1, f"No matching jobs found!")
+        return (True, f"No matching jobs for tags: {job_tags}")
+
 
 def routine(args: dict, controller: Controller) -> Tuple[bool, str]:
     """
     Returns a description of the routine with that name.
-    
-    routine [routine_name]
+
+    Ex:
+        routine [routine_name]
 
     Parameters
     ----------
@@ -163,15 +188,18 @@ def routine(args: dict, controller: Controller) -> Tuple[bool, str]:
         A tuple consisting of the success/failure status (bool) and a
         descriptive message to return to the user.
     """
-    routine = args['routine']
+    routine = args["routine"]
     routine = controller.routines[routine]
 
-    return (1, str(routine))
+    return (True, str(routine))
+
 
 def get_sched(args: dict, controller: Controller) -> Tuple[bool, str]:
     """
     Returns a string listing the current schedule.
-    get-sched
+
+    Ex:
+        get-sched
 
     Parameters
     ----------
@@ -186,8 +214,8 @@ def get_sched(args: dict, controller: Controller) -> Tuple[bool, str]:
         A tuple consisting of the success/failure status (bool) and a
         descriptive message to return to the user.
     """
-    
-    return 1, controller.current_schedule
+
+    return (True, controller.current_schedule)
 
 
 def start(args: dict) -> Tuple[Controller, int]:
@@ -205,40 +233,42 @@ def start(args: dict) -> Tuple[Controller, int]:
         A tuple of values to pass into the main() function (an instance of
         :class: Controller and the interval between loop runs.)
     """
-    yaml.add_constructor('!EnvVar', env_var_constructor)
-    with open(args['source'], 'rb') as c:
+    for tag, constructor in CONSTRUCTORS.items():
+        yaml.add_constructor(tag, constructor, yaml.SafeLoader)
+
+    with open(args["source"], "rb") as c:
         config = yaml.load(c, Loader=yaml.SafeLoader)
-    
-    settings = config['settings']
 
-    messenger = settings['messenger']
-    dispenser = Dispenser(**settings['dispenser'])
-    controller = Controller(messenger = messenger,
-                            dispenser = dispenser,
-                            **settings['controller'])
-    
-    for es in config['error_sensors']:
-        controller.monitor.register(sensor_type='error', **es)
+    settings = config["settings"]
 
-    for ts in config['tank_sensors']:
-        controller.monitor.register(sensor_type='tank', **ts)
+    messenger = settings["messenger"]
+    dispenser = Dispenser(**settings["dispenser"])
+    controller = Controller(
+        messenger=messenger, dispenser=dispenser, **settings["controller"]
+    )
 
-    for p in config['pumps']:
+    for es in config["error_sensors"]:
+        controller.monitor.register(sensor_type="error", **es)
+
+    for ts in config["tank_sensors"]:
+        controller.monitor.register(sensor_type="tank", **ts)
+
+    for p in config["pumps"]:
         controller.dispenser.register(**p)
 
-    for r in config['routines']:
+    for r in config["routines"]:
+        if any(["_model" in s for s in r["steps"]]):
+            raise ValueError(
+                "The '_model' parameter should not be manually"
+                + "provided for routine steps"
+            )
 
-        if any(['_model' in s for s in r['steps']]):
-            raise ValueError("The '_model' parameter should not be manually"+\
-                "provided for routine steps")
-
-        r['steps'] = [Step(**s) for s in r['steps']]
+        r["steps"] = [Step(**s) for s in r["steps"]]
         routine = Routine(**r)
 
         for s in routine.steps:
             s.parent = routine
-            
+
         controller.register_routine(routine)
-        controller.update_routine(routine.name)
-    
-    return (controller, args['interval'])
+
+    return (controller, args["interval"])
