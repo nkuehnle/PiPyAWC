@@ -42,14 +42,14 @@ $ tmux new-session -d -s pipyawc
 $ tmux send-keys -t pipyawc C-z "PiPy-AWC start --source ./config.yaml --interval 1 " Enter
 ```
 
-There is also "remote CLI" for modifying behaviors mid-run (described below), I will not describe this here for now, as it's still quite buggy.
+There is also "remote CLI" for modifying behaviors mid-run (described below), I will describe this in greater depth below. The --help command will offer full documentation.
 
 To connect to a tmux session to monitor/modify behavior via ssh/directly on device, use:
 ```
 $ tmux attach-session -t pipyawc
 ```
 
-See the examples in ./data/config.yaml for examples on how to properly configure pumps, sensors, and basic tank settings.
+See the examples in ./data/config.yaml for examples on how to properly configure pumps, sensors, and basic tank settings and the documentation below to understand how they all interact and function in the codebase.
 
 
 ## Application design
