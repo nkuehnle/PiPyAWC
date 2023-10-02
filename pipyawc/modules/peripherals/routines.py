@@ -1,6 +1,6 @@
 # Built-in modules
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Tuple, Optional
 from pathlib import Path
 import datetime as dt
 
@@ -28,7 +28,7 @@ class Step:
         The pump associated with the step.
     start_states : List[str]
         The list of start states for the step.
-    end_states : List[str]
+    end_states : error_checks: Tuple[str]
         The list of end states for the step.
     error_checks : List[str]
         Tuple of error checks for the step.
@@ -164,8 +164,6 @@ class Routine:
     ----------
     name : str
         The name of the routine.
-    run_time_confidence : float
-        The confidence level for runtime predictions.
     interval : int
         The interval at which the routine runs.
     unit : str
@@ -174,9 +172,9 @@ class Routine:
         The priority level of the routine.
     steps : List[Step]
         The list of steps within the routine.
-    error_contacts : List[str], optional
+    error_contacts : Tuple[str], optional
         List of error contacts for notification, by default [].
-    completion_contacts : List[str], optional
+    completion_contacts : Tuple[str], optional
         List of completion contacts for notification, by default [].
 
     Methods
@@ -188,8 +186,6 @@ class Routine:
     ----------
     name : str
         The name of the routine.
-    run_time_confidence : float
-        The confidence level for runtime predictions.
     interval : int
         The interval at which the routine runs.
     unit : str
@@ -198,20 +194,19 @@ class Routine:
         The priority level of the routine.
     steps : List[Step]
         The list of steps within the routine.
-    error_contacts : List[str]
+    error_contacts : Tuple[str]
         List of error contacts for notification.
-    completion_contacts : List[str]
+    completion_contacts : Tuple[str]
         List of completion contacts for notification.
     """
 
     name: str
-    run_time_confidence: float
     interval: int
     unit: str
     priority: int
     steps: List[Step]
-    error_contacts: List[str] = []
-    completion_contacts: List[str] = []
+    error_contacts: Tuple[str] = ()
+    completion_contacts: Tuple[str] = ()
 
     def __str__(self) -> str:
         """

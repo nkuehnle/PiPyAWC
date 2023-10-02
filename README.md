@@ -16,7 +16,7 @@ NOTE: This is an experimental program. I'm significantly behind on developing tr
 2. Install via pip
 
 	```
-	$ pip3 install ./dist/pipy-awc-0.7.3-py3-none-any.whl
+	$ pip3 install ./dist/pipy-awc-0.8.0-py3-none-any.whl
 	```
 
 ### Configuation

@@ -2,17 +2,10 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.setup]
+[project]
 name = "pipy-awc"
-version = "0.7.3"
-description = "PiPy Automatic-Water Controller"
-long_description = """
-A dynamically-configurable & automated aquarium water level controller for the Raspberry Pi using Python. Intended to run using mechanical voltage relays (i.e. Waveshare Relay Hat) and optical contact liquid sensors (i.e. from DFRobot/CQRObot)
-"""
-author = "Neil Kuehnle"
-author_email = "nkuehnle1191@gmail.com"
-license = "GPLv2"
-url = "https://github.com/nkuehnle/PiPyAWC"
+version = "0.8.0"
+description = "PiPy Automatic-Water Controller: A dynamically-configurable & automated aquarium water level controller for the Raspberry Pi using Python. Intended to run using mechanical voltage relays (i.e. Waveshare Relay Hat) and optical contact liquid sensors (i.e. from DFRobot/CQRObot)"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -26,12 +19,20 @@ classifiers = [
     "Topic :: System :: Hardware",
 ]
 keywords = ["Raspberry Pi", "Aquarium", "Automation", "AWC", "RPi"]
-packages = ["pipy-awc"]  # Replace with the actual package name
-python_requires = "~=3.7"
+authors = [
+	{name = "Neil Kuehnle", email = "nkuehnle1191@gmail.com"}
+]
+license = {text = "GPLv2"}
+readme = "README.md"
+requires-python = "~=3.7"
+dependencies = [
+	"pandas>=1.3",
+	"pyaml>=21.10",
+	"schedule>=1.1.0",
+	"gpiozero>=1.6.2",
+	"imap-tools==0.55.0"
+]
 
-[tool.setuptools.install_requires]
-pandas = ">=1.3"
-pyaml = ">=21.10"
-schedule = ">=1.1.0"
-gpiozero = ">=1.6.2"
-imap-tools = "0.55.0"
+[project.urls]
+"Homepage" = "https://github.com/nkuehnle/PiPyAWC"
+"Bug Tracker" = "https://github.com/nkuehnle/PiPyAWC/issues"
