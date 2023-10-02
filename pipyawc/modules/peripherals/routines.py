@@ -1,6 +1,6 @@
 # Built-in modules
 from dataclasses import dataclass
-from typing import Tuple, List, Optional
+from typing import List, Optional
 from pathlib import Path
 import datetime as dt
 
@@ -30,7 +30,7 @@ class Step:
         The list of start states for the step.
     end_states : List[str]
         The list of end states for the step.
-    error_checks : Tuple[str]
+    error_checks : List[str]
         Tuple of error checks for the step.
     max_runtime : float
         The maximum allowed runtime for the step.
@@ -70,7 +70,7 @@ class Step:
         The list of start states for the step.
     end_states : List[str]
         The list of end states for the step.
-    error_checks : Tuple[str]
+    error_checks : List[str]
         Tuple of error checks for the step.
     max_runtime : float
         The maximum allowed runtime for the step.
@@ -88,17 +88,13 @@ class Step:
         Whether to proceed on error.
     cancel_on_critical_failure : bool
         Whether to cancel on a critical failure.
-    max_time : float
-        The maximum allowed runtime for the step.
-    min_time : float
-        The minimum allowed runtime for the step.
     """
 
     name: str
     pump: str
     start_states: List[str]
     end_states: List[str]
-    error_checks: Tuple[str]
+    error_checks: List[str]
     max_runtime: float
     parent: Optional["Routine"] = None
     first_run: Optional[dt.datetime] = None

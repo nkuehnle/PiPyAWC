@@ -38,10 +38,7 @@ class Controller:
     def __init__(
         self,
         messenger: Messenger = Messenger(),
-        routine_update_interval: int = 1,
-        routine_update_unit: str = "days",
-        email_check_delay_s: int = 30,
-        stdev_min_n: int = 30,
+        message_check_delay_s: int = 30,
         routines: Dict[str, Routine] = {},
         monitor: Monitor = Monitor(),
         dispenser: Dispenser = Dispenser(),
@@ -54,14 +51,8 @@ class Controller:
         ----------
         messenger : Messenger, optional
             The messenger used for notifications, by default Messenger()
-        routine_update_interval : int, optional
-            The interval for routine updates, by default 1
-        routine_update_unit : str, optional
-            The unit of routine update interval, by default "days"
-        email_check_delay_s : int, optional
-            The delay in seconds for checking email commands, by default 30
-        stdev_min_n : int, optional
-            The minimum number of stdev, by default 30
+        message_check_delay_s : int, optional
+            The delay in seconds for checking message commands, by default 30
         routines : Dict[str, Routine], optional
             A dictionary of routines, by default {}
         monitor : Monitor, optional
@@ -76,13 +67,10 @@ class Controller:
         self.monitor = monitor
         self.dispenser = dispenser
         self.schedule = schedule
-        self.routine_update_interval = routine_update_interval
-        self.routine_update_unit = routine_update_unit
-        self.stdev_min_n = stdev_min_n
-        self.email_check_delay_s = email_check_delay_s
+        self.message_check_delay_s = message_check_delay_s
         self.pending_commands: List[RemoteCommand] = []
 
-        check_job = self.schedule.every(self.email_check_delay_s).seconds
+        check_job = self.schedule.every(self.message_check_delay_s).seconds
         check_job.do(self.check_orders)
 
     @property

@@ -243,8 +243,12 @@ def start(args: dict) -> Tuple[Controller, int]:
 
     messenger = settings["messenger"]
     dispenser = Dispenser(**settings["dispenser"])
+    if "controller" in settings:
+        controller_kwargs = settings["controller"]
+    else:
+        controller_kwargs = {}
     controller = Controller(
-        messenger=messenger, dispenser=dispenser, **settings["controller"]
+        messenger=messenger, dispenser=dispenser, **controller_kwargs
     )
 
     for es in config["error_sensors"]:
