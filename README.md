@@ -21,9 +21,9 @@ NOTE: This is an experimental program for personal use. I'm significantly behind
 
 ### Configuation
 
-Fill out the config.yaml file as needed under ./data/
+Fill out the config.yaml file as desired. There is an example under ./data/config.yaml -- some features are described in greater detail with config examples below.
 
-Environmental variables are supported in the .yaml file using the !EnvVar ${VAR_NAME} format. I recommend this in place of using plain-text. This is slightly more secure than working with raw text paswords and I recommend familiarizing yourself with [environmental variables and user permissions in Linux](https://security.stackexchange.com/questions/14000/environment-variable-accessibility-in-linux/14009#14009). Regardless, I recommend establishing a dedicated GMail account for this program and following Google's instructions for [less secure apps](https://support.google.com/accounts/answer/6010255?hl=en) which involves setting up revocable application password.
+Note: Environmental variables are supported in the .yaml file using the !EnvVar ${VAR_NAME} syntax. I recommend this in place of using plain-text for sensitive records. This is slightly more secure than working with raw text paswords and I recommend familiarizing yourself with [environmental variables and user permissions in Linux](https://security.stackexchange.com/questions/14000/environment-variable-accessibility-in-linux/14009#14009). Regardless, I recommend establishing a dedicated GMail account for this program and following Google's instructions for [less secure apps](https://support.google.com/accounts/answer/6010255?hl=en) which involves setting up revocable application password. I have run my controller off of a single, dedicated GMail account since late 2021.
 
 ### Basic Usage
 
