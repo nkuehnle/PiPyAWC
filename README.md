@@ -55,10 +55,10 @@ See the examples in ./data/config.yaml for examples on how to properly configure
 ## Application design
 Typehints and docstrings are fairly extensive throughout the codebase. **Consider this a very early alpha distribution of this program since test coverage is mimimal/limited to command line and basic controller functions.**
 
-Below I will attempt to highlight the main elements of the program below.
+Below I will attempt to highlight the main elements of the program.
 
 ### Project stucture
-The `pipyawc/modules` folder contains core functions required to run the raspberry pi and its physical activities. It has two sub-modules, operations (scheduling, messenger code, etc) and peripherals (abstractions and code for sensors, pumps and routines). In the main source `pipyawc/` directory are several modules which abstract the two types of CLIs.
+The `pipyawc/modules` folder contains core functions required to run the Raspberry Pi and its physical activities. It has two sub-modules, operations (scheduling, messenger code, etc) and peripherals (sensors, pumps and routines) which abstract basic functions used for controlling and monitoring the peripheral equipment and/or scheduling tasks and sending notifications via email. In the main source `pipyawc/` directory are also several modules which abstract the two types of CLIs that are used for taking user inputs.
 ```
 ├── bin
 │   └── PiPy-AWC
