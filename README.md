@@ -53,10 +53,12 @@ See the examples in ./data/config.yaml for examples on how to properly configure
 
 
 ## Application design
-Type-hints and useful docstrings are still a work in progress, as is this README. **Consider this a very early alpha distribution.**
+Typehints and docstrings are fairly extensive throughout the codebase. **Consider this a very early alpha distribution of this program since test coverage is mimimal/limited to command line and basic controller functions.**
 
-Below I will attempt to highlight my main design patterns utilized.
+Below I will attempt to highlight the main elements of the program below.
 
+### Project stucture
+The `pipyawc/modules` folder contains core functions required to run the raspberry pi and its physical activities. It has two sub-modules, operations (scheduling, messenger code, etc) and peripherals (abstractions and code for sensors, pumps and routines). In the main source `pipyawc/` directory are several modules which abstract the two types of CLIs.
 ```
 ├── bin
 │   └── PiPy-AWC
@@ -97,16 +99,16 @@ Below I will attempt to highlight my main design patterns utilized.
     ├── _parser_helpers.py
     └── test_parser.py
 ```
-## Project stucture
-The modules folder contains core functions required to run the raspberry pi and its physical activities. It has two sub-modules, operations (scheduling, messenger code, etc) and peripherals (abstractions and code for sensors, pumps and routines). In the main source `pipyawc` directory are several modules which abstract the two types of CLIs.
-
 ### Controller
-The key object is the Controller class contained in /src/modules/controller.py
+The key object is the Controller class contained in `pipyawc/modules/controller.py`
 
-This class has several child objects which it coordinates including the scheduler (and its jobs), the e-mail client (messenger), the routine templates used for jobs/dispenser logic, the dispenser (and its pumps), and the monitor (and its sensors). The Routine and Step dataclasses store information about how the dispenser should operate. 
+This class has several child objects which it coordinates including the scheduler (and its jobs), the e-mail client (messenger), the routine templates used for jobs/dispenser logic, the dispenser (and its pumps), and the monitor (and its sensors). The Routine and Step dataclasses store information about how the Dispenser should operate. The Controller is the glue that holds all of these together.
 
 ### Peripherals
-Dispenser and Monitor classes (contained in /src/modules/peripherals/) act as factories, which instantiate sensors/pumps and register them in dictionary attributes stored with the parent (dispenser/monitor) instance. Sensors report back to the monitor via an observer/callback pattern whenever their value changes).
+Dispenser and Monitor classes (contained in `pipyawc/modules/peripherals/`) act as factories, which instantiate sensors/pumps and register them in dictionary attributes stored with the parent (dispenser/monitor) instance.
+
+
+Sensors report back to the Monitor class via an observer/callback pattern whenever their value changes) and live in `pipyawc/modules/peripherals/monitor.py`.
 
 Resolution of tank states by the monitor is done by a series of logical checks in which all sensors that *positively* report to a state must be True/1/GPIO.HIGH and all sensors that report *negatively* to a state must be False/0/GPIO.LOW. This is done by specifying state names as strings in on_submerged/on_exposed. Note that if more than one state is valid, TankErrorState will be returned. This should halt all programs from running. Your tank states should theoretically be set-up to ensure that multiple states can occur only if sensor has failed and is giving erroneous readings.
 
@@ -142,8 +144,23 @@ error_sensors:
     permitted_runs: 1
 ```
 
+Pumps are more simple and simply have names and pin configurations. They have a parent in the form of the Dispenser class and live in `pipyawc/modules/peripherals/dispenser.py`
+
+```
+pumps:
+  - name: Wastewater Pump
+    pin: 13
+    active_high: True
+  - name: Saltwater Pump
+    pin: 16
+    active_high: True
+  - name: RODI Pump
+    pin: 19
+    active_high: True
+```
+
 ### Routines and Steps
-Routines are a series of steps which have finite tank states that start and end them (and optional errors which can impact their behavior further).  Both Routines and Steps are implemented as dataclases.
+Routines are a series of steps which have finite tank states that start and end them (and optional errors which can impact their behavior further).  Both Routines and Steps are implemented as dataclases in `pipyawc/modules/peripherals/routines.py` and they represent the core steps that the Dispenser needs to act upon.
 
 An example of two basic functions, a water change and topping off the tank (i.e. replacing evaporated water) are described below (these assume low flow capacity peristaltic pumps). A routine can optionally continue to proceed if the step prior timed out or returned an error. These will still be reported to any error contacts. This can be desired behavior for certain steps, like running a top-off of RODI water prior to draining the tank, since this step may not always need to run. A critical failure is an error or timeout in which the routine is set to *not proceed*. In these cases, the routine can be canceled or not (continued to re-schedule) based on desired behavior.
 ```
@@ -205,7 +222,7 @@ routines:
 The scheduler uses the schedule module, which also uses a factory pattern, where the scheduler instantiates jobs (i.e. job = schedule.every(interval)) and registers them with itself, runs them, and schedules the timing of further jobs using a convenient syntax inspired by natural language. I've extended both the schedule and job classes to implement some convenience features under /src/modules/operations/advanced_schedule.py
 
 ### Messenger
-The messenger class (/src/modules/operations/messaging.py collects some functions from stmplib and imap-tools. There is an abstract imlementation in the form of Messenger class, but currently there are not other modes of messaging between the program and user besides smtp/imap emails.
+The EmailMessenger class (`pipyawc/modules/operations/messaging.py` collects some functions from stmplib and imap-tools. There is an abstract imlementation in the form of Messenger class, but currently there are not other modes of messaging between the program and user besides smtp/imap emails.
 
 ### CLI/Parsers
 Contained in /src/ are several files for handling ArgumentParser activites.
