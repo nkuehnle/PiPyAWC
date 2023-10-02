@@ -292,4 +292,4 @@ For instance, in the run "Water Change" --at 10:00:00" example above, run is def
 * imap-tools==0.55.0
 
 ## Schematics/pics coming soon
-Come back later!
+Come back later for wiring instructions on how to build a device.
