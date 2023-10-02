@@ -87,12 +87,12 @@ Sometimes these subcommands require helper functions to process complex argument
 For instance, in the run "Water Change" --at 10:00:00" example above, run is defined in subcommand_funcs.py as a Python function and as a subnode (of the Subcommand class) of the REMOTE_CLI tree structure in arguments.py, the --at optional flag is defined further down within that same tree structure and as a function in argument_funcs.py and called by the run() func as needed.
 
 ## Known Issues
-* Several mid-run/KeyBoardInterrupt CLI options are buggy/behave unexpectedly and need to be fixed
+* Several mid-run/KeyBoardInterrupt CLI options are buggy/behave unexpectedly and need to be fixed (i.e. pausing a job)
 * Some sensors are excessively sensitive and continually swing back and forth between submerged/exposed states when the water surface they are in contact with has high flow. A future version will address this with some signal smoothing.
-	* As of 1/30/2022 this has been indirectly address by adding a bounce_time parameter to the dispenser class, for a 60 sq. inch return area, setting this to .1 (seconds) works well
+	* As of 1/30/2022 this has been indirectly address by adding a bounce_time parameter to the dispenser class, for a 60 sq. inch return area, setting this to .1-2 seconds works well in my time (will depend on the speed of the pumps utilized)
 
 ## To-Dos
-* Create a setup.sh to handle cron job scheduling that will ensure the program always starts on boot and re-starts if it crashes (will probably set-up some environmental variables tied to the Python script to make sure this is handled effectively)
+* Create a setup script to handle cron job scheduling that will ensure the program always starts on boot and re-starts if it crashes (will probably set-up some environmental variables tied to the Python script to make sure this is handled effectively)
 	* will also handle setup for a shell manager (probably tmux since it is pre-installed on Raspbian) so that you can remote into the process from another machine to use keyboard interrupts if needed. Note that the availability of keyboard interrupts is a backup feature, my main intent is to provide mid-run CLI activity via email. Email commands will not disrupt normal activity, but keyboard interrupts may mess up ongoing runs.
 * Break up more Controller class functionality, possibly:
 	* Moving more responsibility for modeling to the Routine/Step classes (possibly move away from dataclass structure for these altogether)
@@ -102,13 +102,13 @@ For instance, in the run "Water Change" --at 10:00:00" example above, run is def
 
 
 ## Dependencies
-* Python (probably ~=3.7+)
-* numpy
-* pandas
-* pyaml
-* schedule
-* gpiozero (should be included w/ default Raspbian install)
-* imap-tools
+* python>=3.7
+	* probably runs fine on 3.6+
+* pandas>=1.3
+* pyaml>=21.10
+* schedule>=1.1.0
+* gpiozero>=1.6.2
+* imap-tools==0.55.0
 
 ## Schematics/pics coming soon
 Come back later!
