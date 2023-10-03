@@ -1,7 +1,7 @@
 # PiPyAWC
 A dynamically-configurable & automated aquarium water level controller for the Raspberry Pi using Python. Intended to run using mechanical voltage relays (i.e. [Waveshare Relay Hat](https://www.waveshare.com/rpi-relay-board.htm) or [Pimoroni's automation hat](https://shop.pimoroni.com/products/automation-hat?variant=30712316554)) and optical contact liquid sensors (i.e. from DFRobot/[CQRObot optical level sensors](https://www.cqrobot.com/index.php?route=product/product&product_id=1101))
 
-NOTE: This is an experimental program for personal use. I'm significantly behind on developing tractable unit tests w/ mock GPIO pins and **it should go without saying that any electronics project involving water carries hazardous risks, use electronics rated for submersible applications, such as the sensors listed above**. Currently unit tests are only implemented for basic core CLI/paser functions, function of the main modules
+NOTE: This is an experimental program for personal use. I'm significantly behind on developing tractable unit tests w/ mock GPIO pins and **it should go without saying that any electronics project involving water carries hazardous risks, use electronics rated for submersible applications, such as the sensors listed above**. Currently unit tests are only implemented for basic core CLI/paser functions, and the basic scheduling function of the main Controller module.
 
 
 ## Getting started
