@@ -1,13 +1,13 @@
-import sys
-from pathlib import Path
-from argparse import ArgumentError
-import time
+#!/usr/bin/env python
 import shlex
+import sys
+import time
+from argparse import ArgumentError
+from pathlib import Path
 
-from pipyawc import new_parser, process_remote, process_stardard, Controller
-from pipyawc.modules.services import NotifyType
+from pipyawc import Controller, new_parser, process_remote, process_stardard
 from pipyawc.modules.peripherals import CheckError
-
+from pipyawc.modules.services import NotifyType
 
 HOME_DIR = Path(__file__).parents[0]
 PROMPT = "Enter command ('end' to exit prompt; 'kill' to terminate process)"
