@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from schedule import CancelJob
 
@@ -10,8 +10,7 @@ from pipyawc.modules.peripherals import (
     PumpTimeoutError,
 )
 
-if TYPE_CHECKING:
-    from .steps import Step
+from .steps import Step
 
 TIME_FMT = "%m/%d/%Y: %H:%M:%S"
 

@@ -1,11 +1,10 @@
 import time
 from functools import wraps
-from typing import Dict, List, Tuple, Union, TYPE_CHECKING
+from typing import Dict, List, Tuple, Union
 
 from gpiozero import DigitalOutputDevice
 
-if TYPE_CHECKING:
-    from pipyawc.modules.logistics import Step
+from pipyawc.modules.logistics import Step
 
 from .monitor import Monitor
 from .peripheral_errors import (

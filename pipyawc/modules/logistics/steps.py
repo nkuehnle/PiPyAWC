@@ -1,7 +1,6 @@
-# Built-in modules
 import datetime as dt
 from dataclasses import dataclass
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
     from .routines import Routine
@@ -88,7 +87,7 @@ class Step:
     end_states: List[str]
     error_checks: List[str]
     max_runtime: float
-    parent: Optional[Routine] = None
+    parent: Optional["Routine"] = None
     first_run: Optional[dt.datetime] = None
     report_invalid_start: bool = True
     proceed_on_invalid_start: bool = False
