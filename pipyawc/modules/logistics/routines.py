@@ -3,13 +3,6 @@ from typing import Dict, List, Optional
 
 from schedule import CancelJob
 
-from pipyawc.modules.peripherals import (
-    Dispenser,
-    ErrorSensorTriggered,
-    Monitor,
-    PumpTimeoutError,
-)
-
 from .steps import Step
 
 TIME_FMT = "%m/%d/%Y: %H:%M:%S"
@@ -82,6 +75,10 @@ class Routine:
         self.errors: List[bool | Exception] = []
         self.run_times: List[int | float] = []
 
+        creation = dt.datetime.now()
+        self.start_dt = creation
+        self.stop_dt = creation
+
     @property
     def run_time(self) -> dt.timedelta:
         return self.start_dt - self.stop_dt
@@ -124,70 +121,3 @@ class Routine:
         title = f"{self.name}: {error.__class__.__name__}"
         body = str(error)
         return {"title": title, "body": body}
-
-    def _run(
-        self,
-        dispenser: Dispenser,
-        monitor: Monitor,
-    ) -> Optional[CancelJob]:
-        self.start_dt = dt.datetime.now()
-        stop = False
-        job_ret = None
-        for step in self.steps:
-            ret = dispenser.run_step(step, monitor)
-
-            run_time, errs = ret
-            self.errors.append(errs)
-            self.run_times.append(run_time)
-
-            # Case where an initial state error was reported.
-            if run_time == 0:
-                if step.report_invalid_start:
-                    self.error_reports.append(self.get_err_report(errs[0]))
-                if not (step.proceed_on_invalid_start):
-                    stop = True
-
-            # Case where the initial state was correctly met
-            elif run_time > 0:
-                # Report and log each individual error encountered.
-                for e in errs:
-                    self.error_reports.append(self.get_err_report(e))
-
-                    if isinstance(e, PumpTimeoutError):
-                        if not (step.proceed_on_timeout):
-                            stop = True
-                    elif isinstance(e, ErrorSensorTriggered):
-                        final_run = e.remaining_runs <= 0
-                        if not (step.proceed_on_error) and final_run:
-                            stop = True
-
-            # Figure out if we need to stop we need to stop early...
-            if stop is True:
-                if step.cancel_on_critical_failure:
-                    job_ret = CancelJob()
-                break  # End for loop early
-
-        return job_ret
-
-    def run(
-        self,
-        dispenser: Dispenser,
-        monitor: Monitor,
-    ) -> Optional[CancelJob]:
-        """_summary_
-
-        Parameters
-        ----------
-        dispenser : Dispenser
-            _description_
-        monitor : Monitor
-            _description_
-
-        Returns
-        -------
-        Optional[CancelJob]
-            _description_
-        """
-        job_ret = self._run(dispenser=dispenser, monitor=monitor)
-        self.stop_dt = dt.datetime.now()
-        return job_ret
