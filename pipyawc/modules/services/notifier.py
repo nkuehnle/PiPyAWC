@@ -1,19 +1,12 @@
-import tomllib
-from pathlib import Path
 from typing import List, Optional
 
 from apprise import Apprise, AppriseAsset
 
-pyproject = Path(__file__).parents[3] / "pyproject.toml"
-
-with open(pyproject, "rb") as f:
-    project_info = tomllib.load(f)["project"]
-
 
 pipyawc_asset = AppriseAsset(
-    app_id=f"PiPyAwc v{project_info['version']}",
-    app_desc=project_info["description"],
-    app_url=project_info["urls"]["Homepage"],
+    app_id="PiPyAwc v.0.9.0",
+    app_desc="PiPy Automatic-Water Controller: A dynamically-configurable & automated aquarium water level controller for the Raspberry Pi using Python. Intended to run using mechanical voltage relays (i.e. Waveshare Relay Hat) and optical contact liquid sensors (i.e. from DFRobot/CQRObot)",
+    app_url="https://github.com/nkuehnle/PiPyAWC",
 )
 
 
