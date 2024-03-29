@@ -116,6 +116,12 @@ class Messenger:
         if not status:
             raise NotificationFailure(f"Notification failed, status: {status}")
 
+    def register_contact(self, contact: Contact):
+        self.contacts[contact.name] = contact
+
+    def register_receiver(self, receiver: Receiver):
+        self.receivers.append(receiver)
+
 
 def contact_constructor(loader: yaml.Loader, node: yaml.MappingNode):
     vals = loader.construct_mapping(node)

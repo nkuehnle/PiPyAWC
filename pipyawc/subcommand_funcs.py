@@ -1,5 +1,5 @@
 from argparse import ArgumentError
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 
 import yaml
 
@@ -252,11 +252,12 @@ def start(args: dict) -> Tuple[Controller, int]:
 
     settings = config["settings"]
 
-    messenger = Messenger(
-        receivers=settings["receivers"],
-        contacts=settings["contacts"],
-        check_delay_sec=settings["check_delay_sec"],
-    )
+    messenger = Messenger(check_delay_sec=settings["check_delay_sec"])
+    msg_setting: Dict[str, Any] = settings["messenger"]
+    for contact in msg_setting.get("contacts", []):
+        messenger.register_contact(contact)
+    for receiver in msg_setting.get("receivers", []):
+        messenger.register_receiver(receiver)
     dispenser = Dispenser(**settings["dispenser"])
 
     controller = Controller(messenger=messenger, dispenser=dispenser)
