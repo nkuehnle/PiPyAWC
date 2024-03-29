@@ -13,7 +13,7 @@ from .services import (
 CONSTRUCTORS = {
     "!EnvVar": env_var_constructor,
     "!EmailMessenger": email_receiver_constructor,
-    "!ContactConstructor": contact_constructor,
+    "!Contact": contact_constructor,
 }
 
 __all__ = [
