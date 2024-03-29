@@ -12,6 +12,7 @@ from .services import (  # Control high-lvl logic, schedule, user input & more
     NotifyType,
     RemoteCommand,
 )
+from .run_routine import run
 
 TIME_FMT = "%m/%d/%Y: %H:%M:%S"
 
@@ -118,7 +119,7 @@ class Controller:
             The cancellation job, if applicable.
         """
         routine = self.routines[name]
-        job_ret = routine.run(dispenser=self.dispenser, monitor=self.monitor)
+        job_ret = run(routine=routine, dispenser=self.dispenser, monitor=self.monitor)
         for r in routine.error_reports:
             self.notify(
                 contacts=routine.error_contacts,
