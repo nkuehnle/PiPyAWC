@@ -1,18 +1,24 @@
-# Default modules
-from typing import Tuple, Optional
 from argparse import ArgumentError
+from typing import List, Optional, Tuple
 
-# Third-party modules
 import yaml
 
-# Custom modules
-from .arg_funcs import on, schedule_in, at, delay_for, delay_until
-from .modules import Controller, Step, Routine, Dispenser, CONSTRUCTORS, AJob
+from pipyawc.modules import (
+    CONSTRUCTORS,
+    AdvJob,
+    Controller,
+    Dispenser,
+    Messenger,
+    Routine,
+    Step,
+)
+
+from .arg_funcs import at, delay_for, delay_until, on, schedule_in
 
 TIME_FMT = "%m/%d/%Y: %H:%M:%S"
 
 
-def _set_at_in(controller: Controller, args: dict, job: Optional[AJob]) -> AJob:
+def _set_at_in(controller: Controller, args: dict, job: Optional[AdvJob]) -> AdvJob:
     if args["at"]:
         if job:
             job = at(args["at"], job)
@@ -78,9 +84,16 @@ def run(args: dict, controller: Controller) -> Tuple[bool, str]:
         job.tag("One-Time")
     job.tag(args["routine"])
 
-    job.do(controller.run_routine, name=args["routine"])
+    job.do(controller.run, name=args["routine"])
 
     return (True, f"New job scheduled!\n{job.to_string(TIME_FMT)}")
+
+
+def __report_multiple_jobs(jobs: List[AdvJob]) -> Tuple[bool, str]:
+    job_descriptions = []
+    for j in jobs:
+        job_descriptions.append(f"{j}: ({', '.join([str(t) for t in j.tags])})")
+    return (False, f"{len(jobs)} jobs were found: {'; '.join(job_descriptions)}.")
 
 
 def pause(args: dict, controller: Controller) -> Tuple[bool, str]:
@@ -108,13 +121,12 @@ def pause(args: dict, controller: Controller) -> Tuple[bool, str]:
         A tuple consisting of the success/failure status (bool) and a
         descriptive message to return to the user.
     """
-    jobs = controller.schedule.get_jobs_from_tags(args["job_tags"])
+    jobs: List[AdvJob] = controller.schedule.get_jobs_from_tags(
+        tags=args["job_tags"]
+    )  # type: ignore[assignment]
 
     if len(jobs) > 1:  # More than one job found, report this back.
-        for i, j in enumerate(jobs):
-            jobs[i] = f"{j}: ({', '.join(j.tags)})"
-        return (False, f"Multiple jobs were found {'; '.join(jobs)}.")
-
+        return __report_multiple_jobs(jobs)
     else:  # One job found, let's proceed
         job = jobs[0]
 
@@ -127,6 +139,7 @@ def pause(args: dict, controller: Controller) -> Tuple[bool, str]:
             return (False, str(e))
 
     # Report successful delay
+    assert job.next_run is not None
     new_time = job.next_run.strftime(TIME_FMT)
     return (True, f"Job: {job.to_string()} has been delayed until {new_time}.")
 
@@ -153,16 +166,14 @@ def cancel(args: dict, controller: Controller) -> Tuple[bool, str]:
         descriptive message to return to the user.
     """
     job_tags = args["jobtags"]
-    jobs = controller.schedule.get_jobs_from_tags(job_tags)
+    jobs: List[AdvJob] = controller.schedule.get_jobs_from_tags(tags=job_tags)
 
-    if len(jobs) > 1:  # Report that more than one job was found.
-        for i, j in enumerate(jobs):
-            jobs[i] = f"{j}: ({', '.join(j.tags)})"
-        return (False, f"Multiple jobs were found {'; '.join(jobs)}.")
+    if len(jobs) > 1:  # More than one job found, report this back.
+        return __report_multiple_jobs(jobs)
     elif len(jobs) == 1:  # Only one job, let's proceed
         job = jobs[0]
         job_str = job.to_string()
-        job.cancel_job()
+        job.cancel()
         return (True, f"Job: {job_str} cancelled!")
     else:
         return (True, f"No matching jobs for tags: {job_tags}")
@@ -214,7 +225,7 @@ def get_sched(args: dict, controller: Controller) -> Tuple[bool, str]:
         A tuple consisting of the success/failure status (bool) and a
         descriptive message to return to the user.
     """
-
+    _ = args
     return (True, controller.current_schedule)
 
 
@@ -241,15 +252,14 @@ def start(args: dict) -> Tuple[Controller, int]:
 
     settings = config["settings"]
 
-    messenger = settings["messenger"]
-    dispenser = Dispenser(**settings["dispenser"])
-    if "controller" in settings:
-        controller_kwargs = settings["controller"]
-    else:
-        controller_kwargs = {}
-    controller = Controller(
-        messenger=messenger, dispenser=dispenser, **controller_kwargs
+    messenger = Messenger(
+        receivers=settings["receivers"],
+        contacts=settings["contacts"],
+        check_delay_sec=settings["check_delay_sec"],
     )
+    dispenser = Dispenser(**settings["dispenser"])
+
+    controller = Controller(messenger=messenger, dispenser=dispenser)
 
     for es in config["error_sensors"]:
         controller.monitor.register(sensor_type="error", **es)

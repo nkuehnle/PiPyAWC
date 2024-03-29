@@ -1,71 +1,65 @@
 settings:
-  # Controller settings are optional
-  #controller:
-    #message_check_delay_s: 30 # Default every 30 seconds / how often the controller should check for new commends sent via email
-    
   dispenser:
     bounce_time: 5
-  messenger: !EmailMessenger
-    email_address: !EnvVar ${PIPYAWC_EMAIL} # Can use hard-coded string or get environmental variables
-    password: !EnvVar ${PIPYAWC_PASS}
+  messenger:
+    check_delay_sec: 30
     contacts:
-      USER_EMAIL: EMAIL@DOMAIN # Any standard email
-      USER_PHONE: PHONE_NUM@SMS_CARRIER_DOMAIN_GATEWAY # Look this format up for your carrier
-    smtp_domain: smtp.gmail.com # Example for gmail
-    imap_domain: imap.gmail.com # Example for gmail
-    smtp_port: 465 # Example for gmail
-    imap_port: 993 # Example for gmail
+      # Any valid apprise service addresses
+      # See: https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications
+      - !Contact
+        name: name1
+        address: pover://{user}@{token} # Ex sign-up for Pushover and set-up a user key and app token
+    receivers:
+      - !EmailReader # Right now, only email is available
+        email_address: !Env "PIPYAWC_EMAIL"
+        password: !Env "PIPYAWC_PWD"
+        imap_domain: imap.gmail.com # For instance
+        imap_port: 993
 
-# Devices (update pins as needed)
-# Typical error sensors assuming finite storage bins for RODI and saltwater
 error_sensors:
-  - pin: 21
+  - pin: 21 #White cable
     name: Saltwater
     trigger_when: exposed
     permitted_runs: 1
-  - pin: 5
-    name: RODI
-    trigger_when: exposed
-    permitted_runs: 10
+#  - pin: 5 # Yellow
+#    name: RODI
+#    trigger_when: exposed
+#    permitted_runs: 10
 
-# Standard 2-sensor tank level system
 tank_sensors:
-  - pin: 26
+  - pin: 26 # Blue
     name: Normal Level
     when_submerged: [full]
     when_exposed: [low, draining]
-  - pin: 20
+  - pin: 20 # Orange
     name: Low Level
     when_submerged: [full, draining]
     when_exposed: [low]
 
-# Standard top off/water change system using 3 pumps
 pumps:
   - name: Wastewater Pump
-    pin: 13
+    pin: 13 # 1
     active_high: True
   - name: Saltwater Pump
-    pin: 16
+    pin: 16 # 3
     active_high: True
   - name: RODI Pump
-    pin: 19
+    pin: 19 # 2
     active_high: True
 
-# Example routines
-# Max run times of steps should be based on approximate flow ratings of pumps with a margin for error (i.e. a .1 gpm pump should run for up to 6-10 minutes for a .5 gallon water change)
 routines:
   - name: Water-Change
     interval: 21
     unit: hours
     priority: 1
-    error_contacts: [USER_EMAIL, USER_PHONE]
-    completion_contacts: [USER_EMAIL, USER_PHONE]
+    error_contacts: []
+    completion_contacts: []
     steps:
       - name: Top Off
         start_states: [draining]
         end_states: [full]
         pump: RODI Pump
-        error_checks: [Saltwater]
+        error_checks: [] #[Saltwater]
         proceed_on_invalid_start: True
         proceed_on_timeout: False
         proceed_on_error: False
@@ -75,49 +69,48 @@ routines:
         start_states: [full]
         end_states: [low]
         pump: Wastewater Pump
-        error_checks: [Saltwater]
+        error_checks: [] #[Saltwater]
         proceed_on_invalid_start: False
         proceed_on_timeout: True
         proceed_on_error: True
         cancel_on_critical_failure: False
-        max_runtime: 500
+        max_runtime: 900
       - name: Refill Tank
         start_states: [low, draining]
         end_states: [full]
         pump: Saltwater Pump
-        error_checks: [Saltwater, Wastewater]
+        error_checks: [] #[Saltwater, Wastewater]
         proceed_on_invalid_start: True
         proceed_on_timeout: True
-        max_runtime: 500
+        max_runtime: 1000
   - name: Top-Off
     interval: 1
     unit: minutes
     priority: 2
-    error_contacts: [USER_EMAIL, USER_PHONE]
+    error_contacts: []
     completion_contacts: []
     steps:
       - name: Refill
         start_states: [draining, low]
         end_states: [full]
         pump: RODI Pump
-        error_checks: [RODI]
+        error_checks: [] #[RODI]
         report_invalid_start: False
         proceed_on_invalid_start: True
         proceed_on_timeout: True
         max_runtime: 300
-# Null interval jobs can be scheduled only as neded.
   - name: Salt-Refill
     interval: null
     unit: null
     priority: 0
-    error_contacts: [USER_EMAIL, USER_PHONE]
-    completion_contacts: [USER_EMAIL, USER_PHONE]
+    error_contacts: [Neil]
+    completion_contacts: [Neil]
     steps:
       - name: Refill Salt
         start_states: [draining, low]
         end_states: [full]
         pump: Saltwater Pump
-        error_checks: [Saltwater]
+        error_checks: [] #[Saltwater]
         report_invalid_start: True
         proceed_on_invalid_start: True
         proceed_on_timeout: True
@@ -126,14 +119,14 @@ routines:
     interval: null
     unit: null
     priority: 0
-    error_contacts: [USER_EMAIL, USER_PHONE]
+    error_contacts: [Neil]
     completion_contacts: []
     steps:
       - name: Refill
         start_states: [low]
         end_states: [draining]
         pump: RODI Pump
-        error_checks: [RODI]
+        error_checks: [] #[RODI]
         report_invalid_start: False
         proceed_on_invalid_start: True
         proceed_on_timeout: True

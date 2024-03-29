@@ -1,19 +1,16 @@
 # Built-in modules
 from argparse import Namespace
-from typing import List, Optional, Tuple
 from functools import wraps
+from typing import List, Optional, Tuple
 
-# import logging # move from print statments to logging
-
-# Custome modules
-from .modules import Controller
+from pipyawc.modules import Controller, NotifyType
 
 
 def _process_remote(
     args: Namespace,
     controller: Controller,
     output: str = "print",
-    recipients: Optional[List[str]] = None,
+    contacts: Optional[List[str]] = None,
 ):
     """[summary]
 
@@ -26,16 +23,16 @@ def _process_remote(
         The active controller instance on which to act.
     output : str, optional
         How to log the results, by default 'print'
-        'email' = uses the messenger associated with the controller object.
+        'notify' = uses the messenger associated with the controller object.
         'print' = uses the default print() function
-    recipients : Optional[List[str]]; optional
-        A list of email addresses, by default None
-        required if output = 'email'
+    contacts : Optional[List[str]]; optional
+        A list of contact names, by default None
+        required if output = 'notify'
 
     Raises
     ------
     ValueError
-        Raised when output is set to 'email' but no recipients are passed.
+        Raised when output is set to 'notify' but no recipients are passed.
     """
     _args = vars(args)
 
@@ -51,17 +48,24 @@ def _process_remote(
                 print(f"Sucess! {ret[1]}")
             else:
                 print(f"Error! {ret[1]}")
-        elif output == "email":
+        elif output == "notify":
             if ret[0]:
-                sub = "Success!"
+                title = "Command Processed (Success)"
+                notify_type = NotifyType.INFO
             else:
-                sub = "Error!"
+                title = "Command Processed (Error)"
+                notify_type = NotifyType.WARNING
 
-            if recipients is not None:
-                controller.notify(recipients=recipients, body=ret[1], subject=sub)
+            if contacts is not None:
+                controller.notify(
+                    contacts=contacts,
+                    body=ret[1],
+                    title=title,
+                    notify_type=notify_type,
+                )
             else:
                 e = "A recipient list must be passed when command parsing "
-                raise ValueError(e + "output is set to email.")
+                raise ValueError(e + "output is set to notify.")
 
 
 @wraps(_process_remote)
@@ -69,18 +73,21 @@ def process_remote(
     args: Namespace,
     controller: Controller,
     output: str = "print",
-    recipients: Optional[List[str]] = None,
+    contacts: Optional[List[str]] = None,
 ):
-    if recipients:
+    if contacts:
         try:
-            _process_remote(args, controller, output, recipients)
+            _process_remote(args, controller, output, contacts)
         except Exception as e:
             if output == "print":
                 print(f"Error! {e}")
-            elif output == "email":
-                body = f"Something went wrong: {e}"
-                subject = "Error!"
-                controller.notify(recipients, body, subject)
+            elif output == "notify":
+                controller.notify(
+                    contacts=contacts,
+                    body=f"Something went wrong: {e}",
+                    title="Error!",
+                    notify_type=NotifyType.WARNING,
+                )
 
 
 def process_stardard(args: Namespace) -> Tuple[Controller, float]:

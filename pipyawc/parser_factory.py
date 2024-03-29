@@ -1,11 +1,8 @@
-# Built-in modules
 import argparse
-
-# Custom modules
-from .arguments import (
-    STANDARD_CLI,
+from .arguments import (  # Abstract definition of two forms of parsers
     REMOTE_CLI,
-)  # Abstract definition of two forms of parsers
+    STANDARD_CLI,
+)
 
 
 class RemoteUsageError(Exception):

@@ -1,7 +1,8 @@
 """
-The code for this constructory was based on  an example from user dmchk on StackOverflow:
-https://stackoverflow.com/questions/52412297/how-to-replace-environment-variable-value-in-yaml-file-to-be-parsed-using-python
+The code for this constructory was based on  an example from dmchk on StackOverflow:
+https://stackoverflow.com/questions/52412297
 """
+
 # Built-in modules
 import os
 import re

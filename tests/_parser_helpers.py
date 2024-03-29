@@ -1,13 +1,24 @@
+import datetime as dt
 import json
+import shlex
 from pathlib import Path
 from typing import Dict, List
-import datetime as dt
+
 from pipyawc import Controller, new_parser, process_remote
-from pipyawc.modules.operations import AJob
-import shlex
+from pipyawc.modules.services import AdvJob, Messenger
+from pipyawc.modules.logistics import Routine
 
 TEST_DIR = Path(__file__).parents[0]
-MOCK_CONTROLLER = Controller(routines={"Water_Change": None})
+MOCK_ROUTINE = Routine(
+    name="Water_Change",
+    interval=0,
+    unit="seconds",
+    priority=0,
+    steps=[],
+)
+MOCK_CONTROLLER = Controller(
+    messenger=Messenger(), routines={"Water_Change": MOCK_ROUTINE}
+)
 
 
 def load_test_commands() -> Dict[str, Dict[str, Dict]]:
@@ -26,7 +37,7 @@ def load_test_commands() -> Dict[str, Dict[str, Dict]]:
     return configs
 
 
-def schedule_mock_routine(add_tags: List[str]) -> AJob:
+def schedule_mock_routine(add_tags: List[str]) -> AdvJob:
     """Schedule a mock routine with specified tags.
 
     Parameters
@@ -46,7 +57,7 @@ def schedule_mock_routine(add_tags: List[str]) -> AJob:
     for tag in add_tags:
         job.tag(tag)
 
-    job.do(MOCK_CONTROLLER.run_routine, name="Water_Change")
+    job.do(MOCK_CONTROLLER.run, name="Water_Change")
 
     return job
 
@@ -55,10 +66,10 @@ def reset_controller():
     """Reset the global MOCK_CONTROLLER object."""
     # Replaces schedule with new list
     global MOCK_CONTROLLER
-    MOCK_CONTROLLER = Controller(routines={"Water_Change": None})
+    MOCK_CONTROLLER = Controller(messenger=Messenger(), routines={"Water_Change": None})
 
 
-def parse_mock_command(command: str, parser_type: str) -> dict:
+def parse_mock_command(command: str, parser_type: str) -> Dict[str, str]:
     """Parse a mock command string.
 
     Parameters
@@ -70,18 +81,16 @@ def parse_mock_command(command: str, parser_type: str) -> dict:
 
     Returns
     -------
-    dict
+    Dict[str, str]
         A dictionary containing the parsed command arguments.
     """
     # Each iteration of this loop tests a valid command string
     cli = new_parser(parser_type)
     args = cli.parse_args(shlex.split(command))
-    args = vars(args)
-
-    return args
+    return {k: v for k, v in vars(args).items()}
 
 
-def process_mock_command(command: str, parser_type="remote") -> dt.datetime:
+def process_mock_command(command: str, parser_type="remote"):
     """Process a mock command.
 
     Parameters
@@ -90,17 +99,11 @@ def process_mock_command(command: str, parser_type="remote") -> dt.datetime:
         The command string to process.
     parser_type : str, optional
         The type of parser to use for processing the command (default is "remote").
-
-    Returns
-    -------
-    dt.datetime
-        The next run time of the scheduled job.
     """
     # Process mock command
     remote_cli = new_parser(parser_type)
-    command = shlex.split("run Water_Change --at 00:00:00")
-    args = remote_cli.parse_args(command)
-    process_remote(args, MOCK_CONTROLLER, output=False)
+    args = remote_cli.parse_args(shlex.split("run Water_Change --at 00:00:00"))
+    process_remote(args, MOCK_CONTROLLER, output="")
 
 
 def check_job(time: dt.datetime, correct_time: dt.datetime):
@@ -134,7 +137,7 @@ def run(command: str) -> dt.datetime:
     reset_controller()
     process_mock_command(command)
     job_time = MOCK_CONTROLLER.schedule.jobs[0].next_run
-
+    assert job_time is not None
     return job_time
 
 
@@ -155,5 +158,5 @@ def pause(command: str) -> dt.datetime:
     job = schedule_mock_routine(["Repeating"])
     process_mock_command(command)
     job_time = job.next_run
-
+    assert job_time is not None
     return job_time

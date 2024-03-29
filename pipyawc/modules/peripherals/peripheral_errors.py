@@ -1,6 +1,6 @@
 # Default module imports
-from typing import Dict
 from abc import abstractproperty
+from typing import Dict
 
 
 class PeripheralInstanceError(Exception):

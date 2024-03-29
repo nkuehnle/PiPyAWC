@@ -1,16 +1,10 @@
-# Default module imports
-from typing import Dict, List, Union
 from abc import abstractmethod
 from functools import wraps
+from typing import Dict, List, Union
 
-# Third-party module imports
-try:
-    from gpiozero import DigitalInputDevice
-except ModuleNotFoundError as e:
-    print("WARNING: please run pip install gpiozero")
-    raise e
-# Custom module imports
-from .peripheral_errors import SensorInstanceError, CheckError, ErrorSensorTriggered
+from gpiozero import DigitalInputDevice
+
+from .peripheral_errors import CheckError, ErrorSensorTriggered, SensorInstanceError
 
 
 class Sensor(DigitalInputDevice):

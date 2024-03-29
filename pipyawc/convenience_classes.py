@@ -1,6 +1,6 @@
-from typing import List, Callable, Union
-from argparse import ArgumentParser, _SubParsersAction
 from abc import abstractmethod
+from argparse import ArgumentParser, _SubParsersAction
+from typing import Callable, List, Union
 
 
 class ArgumentWrapper:

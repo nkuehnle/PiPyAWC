@@ -1,29 +1,13 @@
 # Default module imports
 import datetime as dt
 import re
-import sys
-from typing import List, Tuple, Union, Sequence
+from itertools import pairwise
+from typing import List, Sequence, Tuple
 
-if sys.version_info >= (3, 10):
-    from itertools import pairwise
-else:  # Compatibilty for pre-3.10 python
-    from itertools import tee
-
-    def pairwise(iterable):
-        """
-        pairwise('ABCDEFG') --> AB BC CD DE EF FG
-        """
-        a, b = tee(iterable)
-        next(b, None)
-        return zip(a, b)
-
-
-# Third-party module imports
 from dateutil.parser import ParserError as DTParserError
 from dateutil.parser import parse as dtparse
 
-# Custom module imports
-from .modules.operations import AJob, AScheduler
+from .modules.services import AdvJob, AdvScheduler
 
 # Constants
 DAYS = ("sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday")
@@ -32,19 +16,19 @@ SINGULAR_UNITS = ("second", "minute", "hour", "day", "week", "month")
 TIME_FMT = "%m/%d/%Y: %H:%M:%S"
 
 
-def at(string: str, target: Union[AScheduler, AJob]) -> AJob:
+def at(string: str, target: AdvScheduler | AdvJob) -> AdvJob:
     """[summary]
 
     Parameters
     ----------
     string : str
         [description]
-    target : Union[AScheduler, AJob]
+    target : AdvScheduler | AdvJob
         [description]
 
     Returns
     -------
-    AJob
+    AdvJob
         [description]
 
     Raises
@@ -55,9 +39,9 @@ def at(string: str, target: Union[AScheduler, AJob]) -> AJob:
     if not re.match(r"^([0-2]\d:)?[0-5]\d:[0-5]\d$", string):
         raise ValueError("Invalid format, must be given as HH:MM or HH:MM:SS.")
 
-    if isinstance(target, AJob):
+    if isinstance(target, AdvJob):
         job = target
-    elif isinstance(target, AScheduler):
+    elif isinstance(target, AdvScheduler):
         job = target.every().day
 
     job = job.at(string)
@@ -65,19 +49,19 @@ def at(string: str, target: Union[AScheduler, AJob]) -> AJob:
     return job
 
 
-def on(string: str, schedule: AScheduler) -> AJob:
+def on(string: str, schedule: AdvScheduler) -> AdvJob:
     """[summary]
 
     Parameters
     ----------
     string : str
         [description]
-    schedule : AScheduler
+    schedule : AdvScheduler
         [description]
 
     Returns
     -------
-    AJob
+    AdvJob
         [description]
 
     Raises
@@ -146,19 +130,19 @@ def _process_timespan(terms: Sequence[str]) -> Tuple[int, str]:
     return (interval, unit)
 
 
-def schedule_in(terms: List[str], schedule: AScheduler) -> AJob:
+def schedule_in(terms: List[str], schedule: AdvScheduler) -> AdvJob:
     """_summary_
 
     Parameters
     ----------
     terms : List[str]
         _description_
-    schedule : AScheduler
+    schedule : AdvScheduler
         _description_
 
     Returns
     -------
-    AJob
+    AdvJob
         _description_
 
     Raises
@@ -180,19 +164,19 @@ def schedule_in(terms: List[str], schedule: AScheduler) -> AJob:
     return job
 
 
-def delay_for(terms: List[str], job: AJob) -> AJob:
+def delay_for(terms: List[str], job: AdvJob) -> AdvJob:
     """[summary]
 
     Parameters
     ----------
     terms : List[str]
         [description]
-    job : AJob
+    job : AdvJob
         [description]
 
     Returns
     -------
-    AJob
+    AdvJob
         [description]
     """
     td_kwargs = {}
@@ -203,12 +187,13 @@ def delay_for(terms: List[str], job: AJob) -> AJob:
 
     offset = dt.timedelta(**td_kwargs)
 
-    job.next_run += offset
+    if job.next_run is not None:
+        job.next_run += offset
 
     return job
 
 
-def delay_until(terms: List[str], job: AJob) -> AJob:
+def delay_until(terms: List[str], job: AdvJob) -> AdvJob:
     fuzzy_dt_str = " ".join(terms)
 
     try:
@@ -216,6 +201,9 @@ def delay_until(terms: List[str], job: AJob) -> AJob:
     except DTParserError:
         err = f'The provided delay: "{fuzzy_dt_str}" could not be parsed'
         raise ValueError(err)
+
+    if job.next_run is None:
+        return job
 
     if job.next_run < new_dt:
         job.next_run = new_dt

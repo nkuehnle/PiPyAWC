@@ -1,14 +1,10 @@
 # Default module imports
 import string
 import random
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Set
 
 # Third-party nodule imports
-try:
-    from schedule import Scheduler, Job, CancelJob
-except ModuleNotFoundError as e:
-    print("WARNING: please run pip install schedule")
-    raise e
+from schedule import Scheduler, Job, CancelJob
 
 
 class AdvancedScheduler(Scheduler):
@@ -23,8 +19,9 @@ class AdvancedScheduler(Scheduler):
         their execution.
         """
         super().__init__()
+        self.jobs: List["AdvancedJob"] = self.jobs  # type: ignore[assignment]
 
-    def get_jobs_from_tags(self, tags: List[str]) -> List[Job]:
+    def get_jobs_from_tags(self, tags: List[str]) -> List["AdvancedJob"]:
         """Get any/all jobs that include all of the provided tags.
 
         Parameters
@@ -34,12 +31,13 @@ class AdvancedScheduler(Scheduler):
 
         Returns
         -------
-        List[Job]
+        List[AdvancedJob]
             A list of PJob instances with matching tags
         """
-        jobs = []
+        jobs: List[Set[AdvancedJob]] = []
         for tag in tags:
-            jobs.append(set(self.get_jobs(tag)))
+            _jobs: List[AdvancedJob] = self.get_jobs(tag)  # type: ignore[assignment]
+            jobs.append(set(_jobs))
 
         job_set = jobs[0].intersection(*jobs[1:])
 
@@ -67,7 +65,7 @@ class AdvancedJob(Job):
     def __init__(
         self,
         interval: int,
-        scheduler: Optional[AdvancedScheduler] = None,
+        scheduler: AdvancedScheduler,
         priority: int = 0,
         run_once=False,
     ):
@@ -93,16 +91,31 @@ class AdvancedJob(Job):
         ----------
         interval : int
             A quantity of a certain time unit
-        scheduler : AdvancedScheduler, optional
+        scheduler : AdvancedScheduler
             The AdvancedScheduler instance that this job will register itself with once
-            it has been fully configured in Job.do()
+            it has been fully configured in Job.do(). Returns an error if missing
+            when do() is called.
         priority : int, optional
             The priority of the job (lower value -> higher priority),
             by default 0 (max priority)
         """
         super().__init__(interval, scheduler)
+        assert scheduler is not None
+        self.scheduler: AdvancedScheduler = scheduler
         self.priority = priority
         self.run_once = run_once
+
+    @property
+    def competing_jobs(self) -> List["AdvancedJob"]:
+        """_summary_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        jobs: List[AdvancedJob] = self.scheduler.jobs  # type: ignore[assignment]
+        return jobs
 
     def __lt__(self, other: Job) -> bool:
         """
@@ -111,6 +124,16 @@ class AdvancedJob(Job):
         can be set which is checked in the event that two jobs happen at the
         same time.
         """
+        if (other.next_run is None) and (self.next_run is None):
+            return False
+        elif (other.next_run is None) and (self.next_run is not None):
+            return True
+        elif (other.next_run is not None) and (self.next_run is None):
+            return False
+
+        assert self.next_run is not None
+        assert other.next_run is not None
+
         if self.next_run != other.next_run:
             return self.next_run < other.next_run
         else:
@@ -125,8 +148,7 @@ class AdvancedJob(Job):
         Set job to the highest priority among all jobs associated with the
         parent schedule
         """
-        jobs = self.scheduler.jobs
-        priorities = [j.priority for j in jobs if hasattr(j, "priority")]
+        priorities = [j.priority for j in self.competing_jobs]
         self.priority = min(priorities) - 1
 
     @property
@@ -135,8 +157,7 @@ class AdvancedJob(Job):
         Set job to the lowest priority among all jobs associated with the
         parent schedule
         """
-        jobs = self.scheduler.jobs
-        priorities = [j.priority for j in jobs if hasattr(j, "priority")]
+        priorities = [j.priority for j in self.competing_jobs]
         self.priority = max(priorities) + 1
 
     def random_tag(self, k: int = 5) -> None:
@@ -166,8 +187,8 @@ class AdvancedJob(Job):
         str
             [description]
         """
-        tags = ", ".join(self.tags)
-        if dt_fmt is not None:
+        tags = ", ".join([str(t) for t in self.tags])
+        if (dt_fmt is not None) and (self.next_run is not None):
             return tags + " @ " + self.next_run.strftime(dt_fmt)
         else:
             return tags
@@ -191,3 +212,8 @@ class AdvancedJob(Job):
             return CancelJob()
         else:
             return ret
+
+    def cancel(self):
+        """Cancels the current job"""
+        if self.next_run is not None:
+            self.scheduler.cancel_job(self)

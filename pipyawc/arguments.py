@@ -1,20 +1,18 @@
-# Built-in modules
 from pathlib import Path
 
-# Custom modules
-from .convenience_classes import (
+from .convenience_classes import (  # Classes for storing abstract representation of CLI elements
     Argument,
     ExclusiveArgGroup,
     Subcommand,
-)  # Classes for storing abstract representation of CLI elements
-from .subcommand_funcs import (
-    run,
-    pause,
+)
+from .subcommand_funcs import (  # Subcommand functions
     cancel,
     get_sched,
+    pause,
     routine,
+    run,
     start,
-)  # Subcommand functions
+)
 
 HOME_DIR = Path(__file__).parents[1]
 CONF_PATH = HOME_DIR / "data" / "config.yaml"

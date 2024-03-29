@@ -1,23 +1,19 @@
-# Default module imports
-from typing import Dict, List, Tuple, Union
-from functools import wraps
 import time
+from functools import wraps
+from typing import Dict, List, Tuple, Union, TYPE_CHECKING
 
-# Third-party module imports
-try:
-    from gpiozero import DigitalOutputDevice
-except ModuleNotFoundError as e:
-    print("WARNING: please run pip install gpiozero")
-    raise e
-# Custom module imports
-from .peripheral_errors import (
-    PumpInstanceError,
-    InitialStateError,
-    PumpTimeoutError,
-    ErrorSensorTriggered,
-)
+from gpiozero import DigitalOutputDevice
+
+if TYPE_CHECKING:
+    from pipyawc.modules.logistics import Step
+
 from .monitor import Monitor
-from .routines import Step
+from .peripheral_errors import (
+    ErrorSensorTriggered,
+    InitialStateError,
+    PumpInstanceError,
+    PumpTimeoutError,
+)
 
 
 class Pump(DigitalOutputDevice):

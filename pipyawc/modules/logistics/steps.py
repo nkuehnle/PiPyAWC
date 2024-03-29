@@ -1,18 +1,10 @@
 # Built-in modules
-from dataclasses import dataclass
-from typing import List, Tuple, Optional
-from pathlib import Path
 import datetime as dt
+from dataclasses import dataclass
+from typing import List, Optional, TYPE_CHECKING
 
-# Third-party module imports
-import numpy as np
-
-HOME_DIR = Path(__file__).parents[3]
-LOG_DIR = HOME_DIR / "data" / "logs"
-try:
-    LOG_DIR.mkdir(parents=True, exist_ok=False)
-except FileExistsError:
-    pass
+if TYPE_CHECKING:
+    from .routines import Routine
 
 
 @dataclass
@@ -96,7 +88,7 @@ class Step:
     end_states: List[str]
     error_checks: List[str]
     max_runtime: float
-    parent: Optional["Routine"] = None
+    parent: Optional[Routine] = None
     first_run: Optional[dt.datetime] = None
     report_invalid_start: bool = True
     proceed_on_invalid_start: bool = False
@@ -129,7 +121,7 @@ class Step:
         float
             The maximum allowed runtime.
         """
-        return self.interval_range().max()
+        return max(self.interval_range())
 
     @property
     def min_time(self) -> float:
@@ -141,83 +133,15 @@ class Step:
         float
             The minimum allowed runtime.
         """
-        return self.interval_range().min()
+        return min(self.interval_range())
 
-    def interval_range(self) -> np.ndarray:
+    def interval_range(self) -> List[int | float]:
         """
         Get the runtime interval range for the step.
 
         Returns
         -------
-        np.ndarray
-            An array representing the runtime interval range.
+        List[int | float]
+            A list representing the runtime interval range.
         """
-        return np.array([0.0, self.max_runtime])
-
-
-@dataclass
-class Routine:
-    """
-    Represents a routine consisting of multiple steps.
-
-    Parameters
-    ----------
-    name : str
-        The name of the routine.
-    interval : int
-        The interval at which the routine runs.
-    unit : str
-        The unit of time for the interval (e.g., 'minutes', 'hours').
-    priority : int
-        The priority level of the routine.
-    steps : List[Step]
-        The list of steps within the routine.
-    error_contacts : Tuple[str], optional
-        List of error contacts for notification, by default [].
-    completion_contacts : Tuple[str], optional
-        List of completion contacts for notification, by default [].
-
-    Methods
-    -------
-    __str__()
-        Get a string representation of the routine.
-
-    Attributes
-    ----------
-    name : str
-        The name of the routine.
-    interval : int
-        The interval at which the routine runs.
-    unit : str
-        The unit of time for the interval.
-    priority : int
-        The priority level of the routine.
-    steps : List[Step]
-        The list of steps within the routine.
-    error_contacts : Tuple[str]
-        List of error contacts for notification.
-    completion_contacts : Tuple[str]
-        List of completion contacts for notification.
-    """
-
-    name: str
-    interval: int
-    unit: str
-    priority: int
-    steps: List[Step]
-    error_contacts: Tuple[str] = ()
-    completion_contacts: Tuple[str] = ()
-
-    def __str__(self) -> str:
-        """
-        Get a string representation of the routine for notifications/error reporting.
-
-        Returns
-        -------
-        str
-            A string describing the routine and its steps.
-        """
-        header = f"Routine: {self.name} runs every {self.interval} {self.unit}"
-        steps = [f"Step {i}: {s}" for i, s in enumerate(self.steps)]
-        body = "\n".join(steps)
-        return header + "\nSteps:\n" + body
+        return [0.0, self.max_runtime]
