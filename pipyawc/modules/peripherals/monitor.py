@@ -242,7 +242,11 @@ class Monitor:
         return sensor
 
     @property
-    def tank_state(self) -> Union[str, CheckError]:
+    def sensor_values(self) -> Dict[str, bool]:
+        return {f"{sn} ({so.pin})": so.value for sn, so in self.sensors.items()}
+
+    @property
+    def tank_state(self) -> str | CheckError:
         """
         A property which returns the current state of the monitored tank.
 
@@ -253,7 +257,7 @@ class Monitor:
 
         Returns
         -------
-        tank_state : Union[str, CheckError]
+        tank_state : str | CheckError
             A string representing the tank state. If a CheckError is returned, then no
             valid tank state was found. In most cases this indicates either improper
             configuration or a malfunctioning sensor. If this is reported during a
@@ -272,7 +276,7 @@ class Monitor:
 
     def check_error(
         self, name: str, decrement: bool = True
-    ) -> Union[bool, ErrorSensorTriggered]:
+    ) -> bool | ErrorSensorTriggered:
         """A function to check a specific, named error sensor.
         This method is typically used to report on and track reservoir levels.
 
@@ -286,7 +290,7 @@ class Monitor:
 
         Returns
         -------
-        Union[bool, ErrorSensorTriggered]
+        bool | ErrorSensorTriggered
             Either False (no error) or the details of the error triggered (which
             evaluates as True)
         """

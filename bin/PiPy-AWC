@@ -1,12 +1,12 @@
-#!/usr/bin/python
 import sys
 from pathlib import Path
 from argparse import ArgumentError
 import time
 import shlex
 
-#
 from pipyawc import new_parser, process_remote, process_stardard, Controller
+from pipyawc.modules.services import NotifyType
+from pipyawc.modules.peripherals import CheckError
 
 
 HOME_DIR = Path(__file__).parents[0]
@@ -24,8 +24,7 @@ def keyboard_input(controller: Controller):
     else:
         try:
             kb_int_cli = new_parser("remote")
-            args = shlex.split(inp)
-            args = kb_int_cli.parse_args(args)
+            args = kb_int_cli.parse_args(shlex.split(inp))
             process_remote(args, controller, "print")
         except ArgumentError as e:
             print(f"Error! {e}")
@@ -36,12 +35,27 @@ def keyboard_input(controller: Controller):
 
 
 def main(controller: Controller, interval: int = 1):
-    last_state = ""
+    last_state: str | CheckError = ""
 
     while True:
         try:  # Normal loop action
             time.sleep(interval)
-            if last_state != controller.monitor.tank_state:
+            curr_state = controller.monitor.tank_state
+            if last_state != curr_state:
+                if isinstance(curr_state, CheckError):
+                    sensor_values = controller.monitor.sensor_values
+                    body = (
+                        "Could not get a valid tank state. An invalid sensor "
+                        + "configuration was detected."
+                        + f"Current sensor values are:\n{sensor_values}"
+                    )
+                    controller.notify(
+                        contacts=[k for k in controller.messenger.contacts.keys()],
+                        title="Could not get a valid tank state. An invalid sensor "
+                        + "configuration was detected.",
+                        body=body,
+                        notify_type=NotifyType.WARNING,
+                    )
                 last_state = controller.monitor.tank_state
                 print(f"Tank state is: {last_state}")
 
@@ -54,11 +68,14 @@ def main(controller: Controller, interval: int = 1):
                     args = email_cli.parse_args(cmd)
 
                     try:
-                        process_remote(args, controller, "email", [msg.sender])
+                        process_remote(args, controller, "notify", [msg.sender])
                     except ArgumentError as e:
-                        body = "Type --help for help"
-                        subj = f"Invalid Command {e}"
-                        controller.notify([msg.sender], body, subj)
+                        controller.notify(
+                            contacts=[msg.sender],
+                            body="Type --help for help",
+                            title=f"Invalid Command {e}",
+                            notify_type=NotifyType.WARNING,
+                        )
 
                     controller.pending_commands.remove(msg)
 

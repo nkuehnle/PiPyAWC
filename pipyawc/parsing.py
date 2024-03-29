@@ -90,7 +90,7 @@ def process_remote(
                 )
 
 
-def process_stardard(args: Namespace) -> Tuple[Controller, float]:
+def process_stardard(args: Namespace) -> Tuple[Controller, int]:
     """[summary]
 
     Parameters

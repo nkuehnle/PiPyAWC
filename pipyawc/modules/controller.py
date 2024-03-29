@@ -181,6 +181,7 @@ class Controller:
         CancelJob
             The cancellation job, if applicable.
         """
+        contacts = [c for c in contacts if c in self.messenger.contacts.keys()]
         if any(contacts):
             try:
                 self.messenger.notify(
