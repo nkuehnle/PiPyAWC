@@ -1,6 +1,6 @@
 import datetime as dt
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Union
 
 if TYPE_CHECKING:
     from .routines import Routine
@@ -134,7 +134,7 @@ class Step:
         """
         return min(self.interval_range())
 
-    def interval_range(self) -> List[int | float]:
+    def interval_range(self) -> List[Union[int, float]]:
         """
         Get the runtime interval range for the step.
 

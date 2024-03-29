@@ -4,6 +4,7 @@ import sys
 import time
 from argparse import ArgumentError
 from pathlib import Path
+from typing import Union
 
 from pipyawc import Controller, new_parser, process_remote, process_stardard
 from pipyawc.modules.peripherals import CheckError
@@ -35,7 +36,7 @@ def keyboard_input(controller: Controller):
 
 
 def main(controller: Controller, interval: int = 1):
-    last_state: str | CheckError = ""
+    last_state: Union[str, CheckError] = ""
 
     while True:
         try:  # Normal loop action

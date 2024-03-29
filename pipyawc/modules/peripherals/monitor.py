@@ -246,7 +246,7 @@ class Monitor:
         return {f"{sn} ({so.pin})": so.value for sn, so in self.sensors.items()}
 
     @property
-    def tank_state(self) -> str | CheckError:
+    def tank_state(self) -> Union[str, CheckError]:
         """
         A property which returns the current state of the monitored tank.
 
@@ -276,7 +276,7 @@ class Monitor:
 
     def check_error(
         self, name: str, decrement: bool = True
-    ) -> bool | ErrorSensorTriggered:
+    ) -> Union[bool, ErrorSensorTriggered]:
         """A function to check a specific, named error sensor.
         This method is typically used to report on and track reservoir levels.
 

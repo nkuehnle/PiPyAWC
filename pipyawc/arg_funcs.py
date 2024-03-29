@@ -2,7 +2,7 @@
 import datetime as dt
 import re
 from itertools import pairwise
-from typing import List, Sequence, Tuple
+from typing import List, Sequence, Tuple, Union
 
 from dateutil.parser import ParserError as DTParserError
 from dateutil.parser import parse as dtparse
@@ -16,7 +16,7 @@ SINGULAR_UNITS = ("second", "minute", "hour", "day", "week", "month")
 TIME_FMT = "%m/%d/%Y: %H:%M:%S"
 
 
-def at(string: str, target: AdvScheduler | AdvJob) -> AdvJob:
+def at(string: str, target: Union[AdvScheduler, AdvJob]) -> AdvJob:
     """[summary]
 
     Parameters

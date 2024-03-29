@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from schedule import CancelJob
 
@@ -72,8 +72,8 @@ class Routine:
             completion_contacts if completion_contacts is not None else []
         )
         self.error_reports: List[Dict[str, str]] = []
-        self.errors: List[bool | Exception] = []
-        self.run_times: List[int | float] = []
+        self.errors: List[Union[bool, Exception]] = []
+        self.run_times: List[Union[int, float]] = []
 
         creation = dt.datetime.now()
         self.start_dt = creation
