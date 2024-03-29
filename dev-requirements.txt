@@ -3,7 +3,7 @@ pyaml>=21.10
 schedule>=1.1.0
 gpiozero>=1.6.2
 imap-tools>=1.5.0
-python-dateutil>=2.90
+python-dateutil
 black
 flake8
 mypy
