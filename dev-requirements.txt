@@ -1,0 +1,8 @@
+pyaml>=21.10
+schedule>=1.1.0
+gpiozero>=1.6.2
+imap-tools>=1.5.0
+black
+flake8
+mypy
+isort
