@@ -63,7 +63,7 @@ def get_controller_interval() -> Tuple[Controller, int]:
     return controller, interval
 
 
-def pre_check(controller: Controller) -> bool:
+def pre_run(controller: Controller):
     """_summary_
 
     Parameters
@@ -76,17 +76,14 @@ def pre_check(controller: Controller) -> bool:
     bool
         _description_
     """
-    do_run = True
     initial_values = pprint.pformat(controller.monitor.sensor_values)
     value_report = f"Initial Sensor Values:\n{initial_values}"
     if isinstance(controller.monitor.tank_state, Exception):
-        do_run = False
         logger.error("Initial Tank State is invalid.")
         logger.debug(value_report)
     else:
         logger.info(f"Initial Tank State is {controller.monitor.tank_state}")
         logger.info(value_report)
-    return do_run
 
 
 def run(controller: Controller, interval: int):
@@ -99,6 +96,10 @@ def run(controller: Controller, interval: int):
     interval : int
         _description_
     """
+    controller.notify_all(
+        title="PiPyAWC has started.",
+        body="The automated water changer is now live.",
+    )
     last_state: Union[str, CheckError] = ""
 
     while True:
@@ -121,7 +122,8 @@ def run(controller: Controller, interval: int):
                         notify_type=NotifyType.WARNING,
                     )
                 last_state = controller.monitor.tank_state
-                logger.info(f"Tank state is: {last_state}")
+
+                logger.info(f"Tank state is now: {last_state}")
 
             controller.schedule.run_pending()
 
@@ -158,8 +160,8 @@ def main():
         _description_, by default 1
     """
     controller, interval = get_controller_interval()
-    if pre_check(controller):
-        run(controller=controller, interval=interval)
+    pre_run(controller)
+    run(controller=controller, interval=interval)
 
 
 if __name__ == "__main__":

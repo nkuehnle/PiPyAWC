@@ -206,6 +206,28 @@ class Controller:
 
         return CancelJob()
 
+    def notify_all(
+        self,
+        title: str,
+        body: str,
+        notify_type: NotifyType = NotifyType.INFO,
+    ):
+        """_summary_
+
+        Parameters
+        ----------
+        title : str
+            _description_
+        body : str
+            _description_
+        notify_type : NotifyType, optional
+            _description_, by default NotifyType.INFO
+        """
+        all_contacts = [c for c in self.messenger.contacts.keys()]
+        self.notify(
+            title=title, body=body, notify_type=notify_type, contacts=all_contacts
+        )
+
     def check_orders(self):
         """
         Check for pending orders using the Messenger.
