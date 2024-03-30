@@ -1,9 +1,13 @@
 import inspect
 from typing import Dict, List, Optional
 
-from .logistics import Routine
-from .peripherals import Dispenser, Monitor  # Interact w/ RPi GPIO headers/equipment
-from .services import (  # Control high-lvl logic, schedule, user input & more
+from pipyawc.modules.logistics import Routine
+from pipyawc.modules.peripherals import (
+    Dispenser,
+    Monitor,
+)  # Interact w/ RPi GPIO headers/equipment
+from pipyawc.modules.run_routine import run
+from pipyawc.modules.services import (  # Control high-lvl logic, schedule, user input & more
     AdvJob,
     AdvScheduler,
     CancelJob,
@@ -12,7 +16,7 @@ from .services import (  # Control high-lvl logic, schedule, user input & more
     NotifyType,
     RemoteCommand,
 )
-from .run_routine import run
+from pipyawc.awclogger import logger
 
 TIME_FMT = "%m/%d/%Y: %H:%M:%S"
 
@@ -93,7 +97,7 @@ class Controller:
             The routine (dataclass representation) to register.
         """
         name = routine.name
-        print(f"Registering {name}")
+        logger.info(f"Registering {name}")
         self.routines[name] = routine
 
         if routine.interval is not None:
@@ -205,15 +209,5 @@ class Controller:
     def check_orders(self):
         """
         Check for pending orders using the Messenger.
-
-        This function is passed to PJob.do() and catches connection-related errors.
-
-        Returns
-        -------
-        CancelJob
-            The cancellation job, if applicable.
         """
-        try:
-            self.pending_commands += self.messenger.check()
-        except Exception as e:  # MessengerError as e: # Re-schedules w/ low priority
-            print(f"Message check error: {e}")
+        self.pending_commands += self.messenger.check()

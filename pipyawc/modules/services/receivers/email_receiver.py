@@ -6,6 +6,8 @@ from typing import Dict, List
 
 from imap_tools import AND, ImapToolsError, MailBox
 
+from pipyawc.awclogger import logger
+
 from .accessories import ReceiverError, RemoteCommand
 from .receiver import Receiver
 
@@ -79,6 +81,7 @@ class EmailReceiver(Receiver):
         self.inbox = inbox
         self.imap_port = imap_port
         self.contacts = contacts
+        self._proced_error = False
 
     def segment_text(self, body: str) -> List[str]:
         """
@@ -160,6 +163,12 @@ class EmailReceiver(Receiver):
         """
         try:
             commands = self._check()
+            if any(commands):
+                logger.info(f"Received {len(commands)} new email commands.")
+            self._proced_error = False
             return commands
         except ImapError as e:
+            if not self._proced_error:
+                logger.warn("Failed to retrieve email.", exc_info=e)
+            self._proced_error = True
             raise ReceiverError(f"IMAP Error ({type(e)})")

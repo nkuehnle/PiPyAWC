@@ -4,9 +4,11 @@ import sys
 import time
 from argparse import ArgumentError
 from pathlib import Path
-from typing import Union
+from typing import Union, Tuple
+import pprint
 
 from pipyawc import Controller, new_parser, process_remote, process_stardard
+from pipyawc.awclogger import logger
 from pipyawc.modules.peripherals import CheckError
 from pipyawc.modules.services import NotifyType
 
@@ -15,27 +17,88 @@ PROMPT = "Enter command ('end' to exit prompt; 'kill' to terminate process)"
 
 
 def keyboard_input(controller: Controller):
+    """_summary_
+
+    Parameters
+    ----------
+    controller : Controller
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     inp = input([PROMPT])
 
     if "end" in inp:
         pass
     elif "kill" in inp:
-        print("Terminating program...")
+        logger.info("Terminating program...")
         sys.exit(0)
     else:
         try:
             kb_int_cli = new_parser("remote")
             args = kb_int_cli.parse_args(shlex.split(inp))
-            process_remote(args, controller, "print")
+            process_remote(args, controller, "standard")
         except ArgumentError as e:
-            print(f"Error! {e}")
+            logger.error(f"Error! {e}")
             kb_int_cli.print_help()
             keyboard_input(controller)
 
     return None
 
 
-def main(controller: Controller, interval: int = 1):
+def get_controller_interval() -> Tuple[Controller, int]:
+    """_summary_
+
+    Returns
+    -------
+    Tuple[Controller, int]
+        _description_
+    """
+    standard_cli = new_parser("standard")
+    args = standard_cli.parse_args()
+    controller, interval = process_stardard(args)
+    return controller, interval
+
+
+def pre_check(controller: Controller) -> bool:
+    """_summary_
+
+    Parameters
+    ----------
+    controller : Controller
+        _description_
+
+    Returns
+    -------
+    bool
+        _description_
+    """
+    do_run = True
+    initial_values = pprint.pformat(controller.monitor.sensor_values)
+    value_report = f"Initial Sensor Values:\n{initial_values}"
+    if isinstance(controller.monitor.tank_state, Exception):
+        do_run = False
+        logger.error("Initial Tank State is invalid.")
+        logger.debug(value_report)
+    else:
+        logger.info(f"Initial Tank State is {controller.monitor.tank_state}")
+        logger.info(value_report)
+    return do_run
+
+
+def run(controller: Controller, interval: int):
+    """_summary_
+
+    Parameters
+    ----------
+    controller : Controller
+        _description_
+    interval : int
+        _description_
+    """
     last_state: Union[str, CheckError] = ""
 
     while True:
@@ -58,7 +121,7 @@ def main(controller: Controller, interval: int = 1):
                         notify_type=NotifyType.WARNING,
                     )
                 last_state = controller.monitor.tank_state
-                print(f"Tank state is: {last_state}")
+                logger.info(f"Tank state is: {last_state}")
 
             controller.schedule.run_pending()
 
@@ -84,12 +147,20 @@ def main(controller: Controller, interval: int = 1):
             keyboard_input(controller)
 
 
-if __name__ == "__main__":
-    standard_cli = new_parser("standard")
-    args = standard_cli.parse_args()
-    controller, interval = process_stardard(args)
+def main():
+    """_summary_
 
-    errs = [f"{k}:{v}" for k, v in controller.monitor.error_checks.items()]
-    print(errs)
-    print(controller.monitor.sensors)
-    main(controller, interval)
+    Parameters
+    ----------
+    controller : Controller
+        _description_
+    interval : int, optional
+        _description_, by default 1
+    """
+    controller, interval = get_controller_interval()
+    if pre_check(controller):
+        run(controller=controller, interval=interval)
+
+
+if __name__ == "__main__":
+    main()

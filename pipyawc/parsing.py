@@ -4,12 +4,13 @@ from functools import wraps
 from typing import List, Optional, Tuple
 
 from pipyawc.modules import Controller, NotifyType
+from pipyawc.awclogger import logger
 
 
 def _process_remote(
     args: Namespace,
     controller: Controller,
-    output: str = "print",
+    output: str = "standard",
     contacts: Optional[List[str]] = None,
 ):
     """[summary]
@@ -22,17 +23,17 @@ def _process_remote(
     controller : Controller
         The active controller instance on which to act.
     output : str, optional
-        How to log the results, by default 'print'
-        'notify' = uses the messenger associated with the controller object.
-        'print' = uses the default print() function
+        How to log the results, by default 'standard'
+        'remote' = uses the messenger associated with the controller object.
+        'standard' = uses the default print() function
     contacts : Optional[List[str]]; optional
         A list of contact names, by default None
-        required if output = 'notify'
+        required if output = 'remote'
 
     Raises
     ------
     ValueError
-        Raised when output is set to 'notify' but no recipients are passed.
+        Raised when output is set to 'remote' but no recipients are passed.
     """
     _args = vars(args)
 
@@ -43,12 +44,12 @@ def _process_remote(
         ret = func(_args, controller)
 
     if ret is not None:
-        if output == "print":
+        if output == "standard":
             if ret[0]:
-                print(f"Sucess! {ret[1]}")
+                logger.info(f"Sucess! {ret[1]}")
             else:
-                print(f"Error! {ret[1]}")
-        elif output == "notify":
+                logger.warning(f"Error! {ret[1]}")
+        elif output == "remote":
             if ret[0]:
                 title = "Command Processed (Success)"
                 notify_type = NotifyType.INFO
@@ -72,16 +73,16 @@ def _process_remote(
 def process_remote(
     args: Namespace,
     controller: Controller,
-    output: str = "print",
+    output: str = "standard",
     contacts: Optional[List[str]] = None,
 ):
     if contacts:
         try:
             _process_remote(args, controller, output, contacts)
         except Exception as e:
-            if output == "print":
-                print(f"Error! {e}")
-            elif output == "notify":
+            if output == "standard":
+                logger.error(f"Error! {e}")
+            elif output == "remote":
                 controller.notify(
                     contacts=contacts,
                     body=f"Something went wrong: {e}",

@@ -4,6 +4,8 @@ from typing import Dict, List, Union
 
 from gpiozero import DigitalInputDevice
 
+from pipyawc.awclogger import logger
+
 from .peripheral_errors import CheckError, ErrorSensorTriggered, SensorInstanceError
 
 
@@ -234,7 +236,9 @@ class Monitor:
 
             self.sensors[name] = sensor
             sensor.notify_monitor()
-
+            logger.debug(
+                f"Registered {sensor_type} sensor {sensor.name} on pin {sensor.pin}"
+            )
         except TypeError:
             kwargs = {"name": name, "pin": pin, **kwargs}
             raise SensorInstanceError(kwargs, sensor_type)
@@ -305,3 +309,15 @@ class Monitor:
             return ErrorSensorTriggered(name, remaining_runs)
         else:
             return False
+
+    def any_errors(self) -> bool:
+        """_summary_
+
+        Returns
+        -------
+        bool
+            _description_
+        """
+        in_error = [e for e in self.error_checks.values()]
+        in_error.append(isinstance(self.tank_state, CheckError))
+        return any(in_error)

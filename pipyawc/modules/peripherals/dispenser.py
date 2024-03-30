@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple, Union
 from gpiozero import DigitalOutputDevice
 
 from pipyawc.modules.logistics import Step
-
+from pipyawc.awclogger import logger
 from .monitor import Monitor
 from .peripheral_errors import (
     ErrorSensorTriggered,
@@ -86,7 +86,9 @@ class Dispenser:
             instance.
         """
         try:
-            return Pump(self, name, pin, active_high=active_high)
+            p = Pump(self, name, pin, active_high=active_high)
+            logger.debug(f"Registering pump {p.name} on pin {p.pin}")
+            return p
         except TypeError:
             raise PumpInstanceError({"name": name, "pin": pin})
 

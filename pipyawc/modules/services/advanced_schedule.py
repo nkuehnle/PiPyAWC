@@ -1,10 +1,9 @@
 # Default module imports
-import string
 import random
-from typing import List, Optional, Any, Set
+import string
+from typing import Any, List, Optional, Set
 
-# Third-party nodule imports
-from schedule import Scheduler, Job, CancelJob
+from schedule import CancelJob, Job, Scheduler
 
 
 class AdvancedScheduler(Scheduler):

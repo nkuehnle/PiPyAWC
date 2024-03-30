@@ -1,11 +1,12 @@
 from typing import Dict, List, Optional
 
-from apprise.common import NotifyType
 import yaml
+from apprise.common import NotifyType
 
+from pipyawc.awclogger import logger
 
 from .notifier import Notifier
-from .receivers import Receiver, RemoteCommand
+from .receivers import Receiver, RemoteCommand, ReceiverError
 
 
 class NotificationFailure(Exception):
@@ -82,7 +83,11 @@ class Messenger:
         """
         messages = []
         for receiver in self.receivers:
-            messages.extend(receiver.check())
+            try:
+                new_messages = receiver.check()
+                messages.extend(new_messages)
+            except ReceiverError:
+                pass
         return messages
 
     def notify(
@@ -114,7 +119,9 @@ class Messenger:
             status = notifier.notify(body=body, title=title, notify_type=notify_type)
 
         if not status:
+            logger.warn("Notification delivery failed")
             raise NotificationFailure(f"Notification failed, status: {status}")
+        logger.info(f"Notifications delivered to {len(contacts)}")
 
     def register_contact(self, contact: Contact):
         self.contacts[contact.name] = contact
