@@ -24,11 +24,11 @@ class CustomLogger(logging.Logger):
     def find_caller_info(self):
         stack = inspect.stack()
         # The first frame in the stack is this function, the second frame is the caller.
-        if len(stack) > 2:
-            frame = stack[2]
+        if len(stack) > 3:
+            frame = stack[3]
             module = inspect.getmodule(frame[0])
-            modname = (module.__name__ if module else "__main__",)
-            funcname = (frame.function,)
+            modname = module.__name__ if module else "PiPyAWC"
+            funcname = frame.function
             return f" - {modname}.{funcname}"
         else:
             return ""
