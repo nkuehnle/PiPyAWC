@@ -29,16 +29,16 @@ class CustomLogger(logging.Logger):
             module = inspect.getmodule(frame[0])
             modname = (module.__name__ if module else "__main__",)
             funcname = (frame.function,)
-            return {"caller": f" - {modname}.{funcname}"}
+            return f" - {modname}.{funcname}"
         else:
-            return {"caller": ""}
+            return ""
 
     def _log(
         self, level, msg, args, exc_info=None, extra=None, stack_info=False, **kwargs
     ):
         if extra is None:
             extra = {}
-        extra.update({"caller_info": self.find_caller_info()})
+        extra.update({"caller": self.find_caller_info()})
         super()._log(level, msg, args, exc_info, extra, stack_info, **kwargs)
 
 
