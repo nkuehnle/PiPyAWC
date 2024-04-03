@@ -41,7 +41,7 @@ def keyboard_input(controller: Controller):
             kb_int_cli = new_parser("remote")
             args = kb_int_cli.parse_args(shlex.split(inp))
             logger.debug(f"Received manual input: {args}")
-            process_remote(args, controller, "standard")
+            process_remote(args=args, controller=controller, output="standard")
         except ArgumentError as e:
             logger.error(f"Error! {e}")
             kb_int_cli.print_help()

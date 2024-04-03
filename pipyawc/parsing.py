@@ -78,20 +78,19 @@ def process_remote(
     output: str = "standard",
     contacts: Optional[List[str]] = None,
 ):
-    if contacts:
-        try:
-            _process_remote(args, controller, output, contacts)
-        except Exception as e:
-            if output == "remote":
-                controller.notify(
-                    contacts=contacts,
-                    body=f"Something went wrong: {e}",
-                    title="Error!",
-                    notify_type=NotifyType.WARNING,
-                )
-                logger.error(f"Error! {e}")
-            else:
-                logger.error(f"Error! {e}")
+    try:
+        _process_remote(args, controller, output, contacts)
+    except Exception as e:
+        if output == "remote":
+            controller.notify(
+                contacts=contacts if contacts else [],
+                body=f"Something went wrong: {e}",
+                title="Error!",
+                notify_type=NotifyType.WARNING,
+            )
+            logger.error(f"Error! {e}")
+        else:
+            logger.error(f"Error! {e}")
 
 
 def process_stardard(args: Namespace) -> Tuple[Controller, int]:
