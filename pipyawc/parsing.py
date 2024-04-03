@@ -43,6 +43,8 @@ def _process_remote(
         func = _args["func"]
         ret = func(_args, controller)
 
+    logger.debug(f"Remote command return: {ret}")
+
     if ret is not None:
         if output == "standard":
             if ret[0]:
