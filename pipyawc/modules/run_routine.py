@@ -5,6 +5,7 @@ from schedule import CancelJob
 
 from .logistics import Routine
 from .peripherals import Dispenser, ErrorSensorTriggered, Monitor, PumpTimeoutError
+from pipyawc.awclogger import logger
 
 
 def _run(
@@ -13,9 +14,11 @@ def _run(
     monitor: Monitor,
 ) -> Optional[CancelJob]:
     routine.start_dt = dt.datetime.now()
+    logger.info(f"Started routine {routine.name}")
     stop = False
     job_ret = None
     for step in routine.steps:
+        logger.info(f"Started {routine.name} step {step.name}")
         ret = dispenser.run_step(step, monitor)
 
         run_time, errs = ret
@@ -48,6 +51,7 @@ def _run(
             if step.cancel_on_critical_failure:
                 job_ret = CancelJob()
             break  # End for loop early
+    logger.info(f"Finished routine {routine.name}")
 
     return job_ret
 

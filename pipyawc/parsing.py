@@ -80,15 +80,16 @@ def process_remote(
         try:
             _process_remote(args, controller, output, contacts)
         except Exception as e:
-            if output == "standard":
-                logger.error(f"Error! {e}")
-            elif output == "remote":
+            if output == "remote":
                 controller.notify(
                     contacts=contacts,
                     body=f"Something went wrong: {e}",
                     title="Error!",
                     notify_type=NotifyType.WARNING,
                 )
+                logger.error(f"Error! {e}")
+            else:
+                logger.error(f"Error! {e}")
 
 
 def process_stardard(args: Namespace) -> Tuple[Controller, int]:
