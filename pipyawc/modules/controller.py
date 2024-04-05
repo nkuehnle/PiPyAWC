@@ -138,7 +138,7 @@ class Controller:
                 + "error!"
             )
             notice_type = NotifyType.FAILURE
-        else:
+        elif not any(routine.errors):
             title = f"{routine.name}: Complete!"
             started_at = routine.start_dt.strftime(TIME_FMT)
             runtime = int(routine.run_time.total_seconds())

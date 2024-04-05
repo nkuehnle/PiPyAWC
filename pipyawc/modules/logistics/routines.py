@@ -81,7 +81,7 @@ class Routine:
 
     @property
     def run_time(self) -> dt.timedelta:
-        return self.start_dt - self.stop_dt
+        return self.stop_dt - self.start_dt
 
     def reset(self):
         """_summary_"""
