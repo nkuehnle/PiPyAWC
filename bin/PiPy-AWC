@@ -13,7 +13,7 @@ from pipyawc.modules.peripherals import CheckError
 from pipyawc.modules.services import NotifyType
 
 HOME_DIR = Path(__file__).parents[0]
-PROMPT = "Enter command ('end' to exit prompt; 'kill' to terminate process)"
+PROMPT = "\nEnter command ('end' to exit prompt; 'kill' to terminate process):\n"
 
 
 def keyboard_input(controller: Controller):
@@ -29,7 +29,7 @@ def keyboard_input(controller: Controller):
     _type_
         _description_
     """
-    inp = input([PROMPT])
+    inp = input(PROMPT)
 
     if "end" in inp:
         pass
