@@ -147,12 +147,12 @@ class Controller:
             )
             notice_type = NotifyType.SUCCESS
 
-        self.notify(
-            body=body,
-            title=title,
-            contacts=routine.completion_contacts,
-            notify_type=notice_type,
-        )
+            self.notify(
+                body=body,
+                title=title,
+                contacts=routine.completion_contacts,
+                notify_type=notice_type,
+            )
 
         routine.reset()
 
